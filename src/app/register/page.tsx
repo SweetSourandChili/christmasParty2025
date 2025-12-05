@@ -42,7 +42,7 @@ export default function RegisterPage() {
       const data = await res.json();
 
       if (!res.ok) {
-        throw new Error(data.error || "Failed to send verification code");
+        throw new Error(data.error || "Failed to process request");
       }
 
       setStep("verification");
@@ -181,10 +181,10 @@ export default function RegisterPage() {
               {loading ? (
                 <span className="flex items-center justify-center gap-2">
                   <span className="spinner w-5 h-5" />
-                  Sending Code...
+                  Processing...
                 </span>
               ) : (
-                "📧 Send Verification Code"
+                "🎄 Continue"
               )}
             </button>
           </form>
@@ -192,12 +192,24 @@ export default function RegisterPage() {
           <form onSubmit={handleRegister} className="space-y-6">
             <div className="text-center mb-4">
               <p className="text-christmas-cream/70">
-                A verification code has been sent to
+                Complete your registration for
               </p>
               <p className="text-christmas-gold font-medium">{email}</p>
-              <p className="text-xs text-christmas-cream/50 mt-2">
-                Please check your inbox (and spam folder)
-              </p>
+            </div>
+
+            {/* Temporary notice */}
+            <div className="bg-blue-900/30 border border-blue-500/50 rounded-lg p-4">
+              <div className="flex items-start gap-3">
+                <span className="text-xl">📧</span>
+                <div>
+                  <p className="text-blue-200 text-sm font-medium">
+                    Email verification coming soon!
+                  </p>
+                  <p className="text-blue-200/70 text-xs mt-1">
+                    For now, use this code: <strong className="text-christmas-gold">520260</strong>
+                  </p>
+                </div>
+              </div>
             </div>
 
             <div>
@@ -208,7 +220,7 @@ export default function RegisterPage() {
                 type="text"
                 value={verificationCode}
                 onChange={(e) => setVerificationCode(e.target.value)}
-                placeholder="123456"
+                placeholder="520260"
                 className="input-christmas w-full text-center text-2xl tracking-widest"
                 maxLength={6}
                 required

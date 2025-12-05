@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
-import { sendVerificationEmail } from "@/lib/email";
 import prisma from "@/lib/prisma";
+
+// Temporary fixed verification code until email is set up
+const TEMP_VERIFICATION_CODE = "520260";
 
 export async function POST(request: NextRequest) {
   try {
@@ -25,24 +27,25 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Send verification code
-    const sent = await sendVerificationEmail(email);
+    const expiresAt = new Date(Date.now() + 60 * 60 * 1000); // 1 hour
 
-    if (!sent) {
-      return NextResponse.json(
-        { error: "Failed to send verification code" },
-        { status: 500 }
-      );
-    }
+    // Store the fixed code in database
+    await prisma.verificationCode.create({
+      data: {
+        email,
+        code: TEMP_VERIFICATION_CODE,
+        expiresAt,
+      },
+    });
 
     return NextResponse.json(
-      { message: "Verification code sent successfully" },
+      { message: "Verification code ready" },
       { status: 200 }
     );
   } catch (error) {
     console.error("Send code error:", error);
     return NextResponse.json(
-      { error: "Failed to send verification code" },
+      { error: "Failed to process request" },
       { status: 500 }
     );
   }
