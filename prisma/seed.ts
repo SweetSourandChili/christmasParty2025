@@ -57,27 +57,45 @@ async function main() {
       name: "Base Expenses",
       description:
         "This includes the market budget for food, drinks, decorations, and all necessary supplies for the party.",
-      price: 0, // TBA
+      price: 0,
+      isLocked: true,  // Cannot be changed
+      autoJoin: true,  // All users are automatically joined
     },
     {
       name: "Performance",
       description:
         "Join a performance group and showcase your talent! Every performer receives a special gift 🎁",
-      price: 0, // TBA
+      price: 0,
+      isLocked: true,  // Cannot be changed by users
+      autoJoin: false,
     },
     {
       name: "Group Alcohol",
       description:
         "Join this event if you want to participate in the group alcohol purchase, or bring your own drinks to the party.",
-      price: 0, // TBA
+      price: 0,
+      isLocked: false, // Users can choose
+      autoJoin: false,
     },
   ];
 
   for (const eventData of events) {
-    await prisma.event.create({
+    const event = await prisma.event.create({
       data: eventData,
     });
-    console.log("🎉 Event created:", eventData.name);
+    console.log("🎉 Event created:", eventData.name, eventData.isLocked ? "(locked)" : "(choosable)");
+
+    // Auto-join admin to Base Expenses
+    if (eventData.autoJoin) {
+      await prisma.eventRegistration.create({
+        data: {
+          userId: admin.id,
+          eventId: event.id,
+          joining: true,
+        },
+      });
+      console.log("   ↳ Admin auto-joined to", eventData.name);
+    }
   }
 
   console.log("\n✅ Seeding complete!");

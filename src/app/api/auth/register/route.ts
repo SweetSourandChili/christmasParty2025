@@ -69,6 +69,21 @@ export async function POST(request: NextRequest) {
       },
     });
 
+    // Auto-join user to events with autoJoin enabled
+    const autoJoinEvents = await prisma.event.findMany({
+      where: { autoJoin: true, isActive: true },
+    });
+
+    for (const event of autoJoinEvents) {
+      await prisma.eventRegistration.create({
+        data: {
+          userId: user.id,
+          eventId: event.id,
+          joining: true,
+        },
+      });
+    }
+
     return NextResponse.json(
       { message: "User registered successfully", userId: user.id },
       { status: 201 }

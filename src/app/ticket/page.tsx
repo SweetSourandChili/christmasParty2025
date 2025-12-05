@@ -75,10 +75,6 @@ export default function TicketPage() {
 
   const joiningEvents =
     ticket.user?.eventRegistrations?.filter((reg) => reg.joining) || [];
-  const totalEventsCost = joiningEvents.reduce(
-    (sum, reg) => sum + reg.event.price,
-    0
-  );
 
   return (
     <div className="max-w-2xl mx-auto p-4 sm:p-6 lg:p-8">
@@ -92,7 +88,7 @@ export default function TicketPage() {
         <div className="bg-gradient-to-r from-christmas-red to-christmas-green p-6 text-center relative">
           <div className="absolute top-0 left-0 right-0 h-2 bg-christmas-gold" />
           <h2 className="text-2xl font-bold text-white mb-1">
-            🎄 Christmas Party 2025 🎄
+            🎄 KIKI Christmas Event 2025 🎄
           </h2>
           <p className="text-white/80 text-sm">December 31, 2025 • 6:00 PM</p>
         </div>
@@ -147,7 +143,7 @@ export default function TicketPage() {
           </div>
 
           {/* Events */}
-          <div className="pb-4 mb-4">
+          <div className="border-b border-christmas-gold/30 pb-4 mb-4">
             <p className="text-sm text-christmas-gold mb-2">EVENTS JOINING</p>
             {joiningEvents.length > 0 ? (
               <ul className="space-y-2">
@@ -162,23 +158,11 @@ export default function TicketPage() {
                         {reg.event.name}
                       </span>
                     </span>
-                    {reg.event.price > 0 && (
-                      <span className="text-christmas-gold text-sm">
-                        ${reg.event.price}
-                      </span>
-                    )}
+                    <span className="text-christmas-cream/50 text-sm">
+                      TBA
+                    </span>
                   </li>
                 ))}
-                {totalEventsCost > 0 && (
-                  <li className="flex items-center justify-between border-t border-christmas-gold/30 pt-2 mt-2">
-                    <span className="text-christmas-cream font-medium">
-                      Total
-                    </span>
-                    <span className="text-christmas-gold font-bold">
-                      ${totalEventsCost}
-                    </span>
-                  </li>
-                )}
               </ul>
             ) : (
               <p className="text-christmas-cream/60 text-sm">
@@ -191,6 +175,21 @@ export default function TicketPage() {
                 </Link>
               </p>
             )}
+          </div>
+
+          {/* Estimated Price */}
+          <div className="bg-christmas-gold/10 border border-christmas-gold/30 rounded-lg p-4 mb-4">
+            <div className="flex items-center justify-between">
+              <span className="text-christmas-cream font-medium">
+                Estimated Total
+              </span>
+              <span className="text-christmas-gold font-bold text-lg">
+                800 - 1,100 ₺
+              </span>
+            </div>
+            <p className="text-christmas-cream/50 text-xs mt-2">
+              Final price will be announced soon. This is an approximate range.
+            </p>
           </div>
 
           {/* Ticket ID */}
@@ -214,7 +213,11 @@ export default function TicketPage() {
             Your ticket is pending payment. Please complete the payment to
             activate your ticket. Contact the admin for payment details.
           </p>
-          <p className="text-sm text-christmas-cream/60">
+          <div className="bg-christmas-dark/50 rounded-lg p-4">
+            <p className="text-christmas-gold font-medium mb-1">Estimated Amount</p>
+            <p className="text-2xl font-bold text-christmas-cream">800 - 1,100 ₺</p>
+          </div>
+          <p className="text-sm text-christmas-cream/60 mt-4">
             Once payment is confirmed, your ticket status will be updated to
             &quot;Activated&quot;.
           </p>
@@ -223,4 +226,3 @@ export default function TicketPage() {
     </div>
   );
 }
-

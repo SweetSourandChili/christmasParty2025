@@ -42,7 +42,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const { name, description, price, imageUrl } = await request.json();
+    const { name, description, price, imageUrl, isLocked, autoJoin } = await request.json();
 
     if (!name) {
       return NextResponse.json(
@@ -57,6 +57,8 @@ export async function POST(request: NextRequest) {
         description: description || null,
         price: price || 0,
         imageUrl: imageUrl || null,
+        isLocked: isLocked || false,
+        autoJoin: autoJoin || false,
       },
     });
 
@@ -69,4 +71,3 @@ export async function POST(request: NextRequest) {
     );
   }
 }
-

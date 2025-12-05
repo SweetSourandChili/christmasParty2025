@@ -33,6 +33,14 @@ export async function POST(
       );
     }
 
+    // Check if event is locked (users cannot change their choice)
+    if (event.isLocked) {
+      return NextResponse.json(
+        { error: "This event cannot be changed" },
+        { status: 403 }
+      );
+    }
+
     // Upsert event registration
     const registration = await prisma.eventRegistration.upsert({
       where: {
@@ -60,4 +68,3 @@ export async function POST(
     );
   }
 }
-

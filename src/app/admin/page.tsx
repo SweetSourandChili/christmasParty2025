@@ -51,6 +51,12 @@ interface Event {
   description: string | null;
   price: number;
   isActive: boolean;
+  isLocked: boolean;
+  autoJoin: boolean;
+  registrations: {
+    user: { id: string; name: string };
+    joining: boolean;
+  }[];
 }
 
 export default function AdminPage() {
@@ -68,6 +74,8 @@ export default function AdminPage() {
     name: "",
     description: "",
     price: 0,
+    isLocked: false,
+    autoJoin: false,
   });
   const [actionLoading, setActionLoading] = useState<string | null>(null);
 
@@ -149,7 +157,7 @@ export default function AdminPage() {
       }
 
       setShowCreateEvent(false);
-      setNewEvent({ name: "", description: "", price: 0 });
+      setNewEvent({ name: "", description: "", price: 0, isLocked: false, autoJoin: false });
       fetchData();
     } catch (error: any) {
       alert(error.message);
@@ -166,6 +174,29 @@ export default function AdminPage() {
     try {
       const res = await fetch(`/api/events/${eventId}`, {
         method: "DELETE",
+      });
+
+      if (!res.ok) {
+        const data = await res.json();
+        throw new Error(data.error);
+      }
+
+      fetchData();
+    } catch (error: any) {
+      alert(error.message);
+    } finally {
+      setActionLoading(null);
+    }
+  };
+
+  const handleToggleEventLock = async (eventId: string, currentLocked: boolean) => {
+    setActionLoading(eventId);
+
+    try {
+      const res = await fetch(`/api/events/${eventId}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ isLocked: !currentLocked }),
       });
 
       if (!res.ok) {
@@ -376,13 +407,42 @@ export default function AdminPage() {
                   </button>
                 </div>
                 {event.description && (
-                  <p className="text-sm text-christmas-cream/70 mb-2">
+                  <p className="text-sm text-christmas-cream/70 mb-3">
                     {event.description}
                   </p>
                 )}
-                <p className="text-christmas-gold font-medium">
-                  ${event.price}
-                </p>
+                
+                {/* Event Settings */}
+                <div className="space-y-2 mb-3">
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm text-christmas-cream/70">Locked (users can&apos;t change)</span>
+                    <button
+                      onClick={() => handleToggleEventLock(event.id, event.isLocked)}
+                      disabled={actionLoading === event.id}
+                      className={`px-3 py-1 rounded text-xs font-medium transition ${
+                        event.isLocked
+                          ? "bg-christmas-gold text-christmas-dark"
+                          : "bg-christmas-dark border border-christmas-gold/30 text-christmas-cream/70"
+                      }`}
+                    >
+                      {event.isLocked ? "🔒 Locked" : "🔓 Unlocked"}
+                    </button>
+                  </div>
+                  {event.autoJoin && (
+                    <div className="text-xs text-green-400">
+                      ✓ Auto-joins new users
+                    </div>
+                  )}
+                </div>
+
+                <div className="flex items-center justify-between text-sm">
+                  <span className="text-christmas-cream/50">
+                    {event.registrations.filter(r => r.joining).length} joined
+                  </span>
+                  <span className="text-christmas-gold font-medium">
+                    {event.price > 0 ? `${event.price} ₺` : "TBA"}
+                  </span>
+                </div>
               </div>
             ))}
           </div>
@@ -434,7 +494,7 @@ export default function AdminPage() {
 
                   <div>
                     <label className="block text-sm font-medium text-christmas-gold mb-2">
-                      Price ($)
+                      Price (₺)
                     </label>
                     <input
                       type="number"
@@ -449,6 +509,36 @@ export default function AdminPage() {
                       step="0.01"
                       className="input-christmas w-full"
                     />
+                  </div>
+
+                  <div className="space-y-3">
+                    <label className="flex items-center gap-3 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={newEvent.isLocked}
+                        onChange={(e) =>
+                          setNewEvent({ ...newEvent, isLocked: e.target.checked })
+                        }
+                        className="w-4 h-4"
+                      />
+                      <span className="text-sm text-christmas-cream">
+                        🔒 Lock event (users cannot change their choice)
+                      </span>
+                    </label>
+
+                    <label className="flex items-center gap-3 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={newEvent.autoJoin}
+                        onChange={(e) =>
+                          setNewEvent({ ...newEvent, autoJoin: e.target.checked })
+                        }
+                        className="w-4 h-4"
+                      />
+                      <span className="text-sm text-christmas-cream">
+                        ✓ Auto-join new users to this event
+                      </span>
+                    </label>
                   </div>
 
                   <div className="flex gap-3 pt-4">
@@ -478,4 +568,3 @@ export default function AdminPage() {
     </div>
   );
 }
-

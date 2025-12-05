@@ -75,6 +75,8 @@ model Event {
   price       Float    @default(0)
   imageUrl    String?
   isActive    Boolean  @default(true)
+  isLocked    Boolean  @default(false)  // If true, users cannot change their choice
+  autoJoin    Boolean  @default(false)  // If true, new users are automatically joined
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
   

@@ -10,6 +10,8 @@ interface Event {
   description: string | null;
   price: number;
   imageUrl: string | null;
+  isLocked: boolean;
+  autoJoin: boolean;
   registrations: {
     user: {
       id: string;
@@ -138,7 +140,8 @@ export default function EventsPage() {
         <div className="text-sm text-christmas-cream/80">
           <p>
             Let us know which events you&apos;re interested in attending. 
-            Your response helps us plan better! Prices will be finalized and announced soon.
+            Some events are mandatory (🔒), while others are optional.
+            Prices will be finalized and announced soon.
           </p>
         </div>
       </div>
@@ -161,12 +164,18 @@ export default function EventsPage() {
             {events.map((event) => {
               const myRegistration = getMyRegistration(event);
               const joiningCount = getJoiningCount(event);
+              const isLocked = event.isLocked;
 
               return (
-                <div key={event.id} className="christmas-card overflow-hidden">
+                <div key={event.id} className={`christmas-card overflow-hidden ${isLocked ? 'border-christmas-gold/50' : ''}`}>
                   {/* Event Image/Icon Header */}
-                  <div className="bg-gradient-to-br from-christmas-red/50 to-christmas-green/50 p-8 text-center">
+                  <div className="bg-gradient-to-br from-christmas-red/50 to-christmas-green/50 p-8 text-center relative">
                     <span className="text-6xl">{getEventIcon(event.name)}</span>
+                    {isLocked && (
+                      <div className="absolute top-2 right-2 bg-christmas-gold/90 text-christmas-dark px-2 py-1 rounded text-xs font-bold flex items-center gap-1">
+                        🔒 Required
+                      </div>
+                    )}
                   </div>
 
                   <div className="p-6">
@@ -190,33 +199,47 @@ export default function EventsPage() {
                       joining
                     </div>
 
-                    {/* Action Buttons */}
-                    <div className="flex gap-2">
-                      <button
-                        onClick={() => handleJoin(event.id, true)}
-                        disabled={actionLoading === event.id}
-                        className={`flex-1 py-2 rounded-lg text-sm font-medium transition ${
-                          myRegistration?.joining
-                            ? "bg-green-600 text-white"
-                            : "bg-christmas-green/30 text-christmas-cream hover:bg-christmas-green/50"
-                        }`}
-                      >
-                        {myRegistration?.joining ? "✓ Joining" : "Join"}
-                      </button>
-                      <button
-                        onClick={() => handleJoin(event.id, false)}
-                        disabled={actionLoading === event.id}
-                        className={`flex-1 py-2 rounded-lg text-sm font-medium transition ${
-                          myRegistration && !myRegistration.joining
-                            ? "bg-red-600/80 text-white"
-                            : "bg-red-900/30 text-christmas-cream/70 hover:bg-red-900/50"
-                        }`}
-                      >
-                        {myRegistration && !myRegistration.joining
-                          ? "✓ Not Joining"
-                          : "Not Joining"}
-                      </button>
-                    </div>
+                    {/* Action Buttons or Locked Status */}
+                    {isLocked ? (
+                      <div className="bg-christmas-gold/10 border border-christmas-gold/30 rounded-lg p-3 text-center">
+                        {myRegistration?.joining || event.autoJoin ? (
+                          <p className="text-green-400 font-medium flex items-center justify-center gap-2">
+                            <span>✓</span> You&apos;re registered
+                          </p>
+                        ) : (
+                          <p className="text-christmas-cream/70 text-sm">
+                            Registration managed by admin
+                          </p>
+                        )}
+                      </div>
+                    ) : (
+                      <div className="flex gap-2">
+                        <button
+                          onClick={() => handleJoin(event.id, true)}
+                          disabled={actionLoading === event.id}
+                          className={`flex-1 py-2 rounded-lg text-sm font-medium transition ${
+                            myRegistration?.joining
+                              ? "bg-green-600 text-white"
+                              : "bg-christmas-green/30 text-christmas-cream hover:bg-christmas-green/50"
+                          }`}
+                        >
+                          {myRegistration?.joining ? "✓ Joining" : "Join"}
+                        </button>
+                        <button
+                          onClick={() => handleJoin(event.id, false)}
+                          disabled={actionLoading === event.id}
+                          className={`flex-1 py-2 rounded-lg text-sm font-medium transition ${
+                            myRegistration && !myRegistration.joining
+                              ? "bg-red-600/80 text-white"
+                              : "bg-red-900/30 text-christmas-cream/70 hover:bg-red-900/50"
+                          }`}
+                        >
+                          {myRegistration && !myRegistration.joining
+                            ? "✓ Not Joining"
+                            : "Not Joining"}
+                        </button>
+                      </div>
+                    )}
                   </div>
                 </div>
               );

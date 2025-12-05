@@ -50,17 +50,21 @@ export async function PUT(
     }
 
     const { id: eventId } = await params;
-    const { name, description, price, imageUrl, isActive } = await request.json();
+    const body = await request.json();
+
+    // Build update data with only provided fields
+    const updateData: any = {};
+    if (body.name !== undefined) updateData.name = body.name;
+    if (body.description !== undefined) updateData.description = body.description;
+    if (body.price !== undefined) updateData.price = body.price;
+    if (body.imageUrl !== undefined) updateData.imageUrl = body.imageUrl;
+    if (body.isActive !== undefined) updateData.isActive = body.isActive;
+    if (body.isLocked !== undefined) updateData.isLocked = body.isLocked;
+    if (body.autoJoin !== undefined) updateData.autoJoin = body.autoJoin;
 
     const event = await prisma.event.update({
       where: { id: eventId },
-      data: {
-        name,
-        description,
-        price,
-        imageUrl,
-        isActive,
-      },
+      data: updateData,
     });
 
     return NextResponse.json(event);
@@ -72,4 +76,3 @@ export async function PUT(
     );
   }
 }
-
