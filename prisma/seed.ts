@@ -46,47 +46,38 @@ async function main() {
     console.log("🎫 Admin ticket created");
   }
 
-  // Create sample events
+  // Delete old events
+  await prisma.eventRegistration.deleteMany({});
+  await prisma.event.deleteMany({});
+  console.log("🗑️ Old events cleared");
+
+  // Create new events
   const events = [
     {
-      name: "Cocktail Hour",
+      name: "Base Expenses",
       description:
-        "Enjoy festive cocktails and mocktails while mingling with fellow guests. Live jazz music and holiday appetizers included.",
-      price: 25,
+        "This includes the market budget for food, drinks, decorations, and all necessary supplies for the party.",
+      price: 0, // TBA
     },
     {
-      name: "Christmas Market",
+      name: "Performance",
       description:
-        "Browse handmade gifts, decorations, and delicious treats at our mini market. Perfect for last-minute gift shopping!",
-      price: 0,
+        "Join a performance group and showcase your talent! Every performer receives a special gift 🎁",
+      price: 0, // TBA
     },
     {
-      name: "Dinner Feast",
+      name: "Group Alcohol",
       description:
-        "A magnificent Christmas dinner with traditional roast turkey, ham, and all the fixings. Vegetarian options available.",
-      price: 50,
-    },
-    {
-      name: "After Party",
-      description:
-        "Dance the night away with DJ Santa spinning holiday hits and club classics until 2 AM!",
-      price: 15,
+        "Join this event if you want to participate in the group alcohol purchase, or bring your own drinks to the party.",
+      price: 0, // TBA
     },
   ];
 
   for (const eventData of events) {
-    const existingEvent = await prisma.event.findFirst({
-      where: { name: eventData.name },
+    await prisma.event.create({
+      data: eventData,
     });
-
-    if (!existingEvent) {
-      await prisma.event.create({
-        data: eventData,
-      });
-      console.log("🎉 Event created:", eventData.name);
-    } else {
-      console.log("🎉 Event already exists:", eventData.name);
-    }
+    console.log("🎉 Event created:", eventData.name);
   }
 
   console.log("\n✅ Seeding complete!");

@@ -19,26 +19,11 @@ interface Event {
   }[];
 }
 
-const defaultEvents = [
-  {
-    icon: "🍸",
-    defaultName: "Cocktail Hour",
-    defaultDescription:
-      "Enjoy festive cocktails and mocktails while mingling with fellow guests.",
-  },
-  {
-    icon: "🎄",
-    defaultName: "Christmas Market",
-    defaultDescription:
-      "Browse handmade gifts, decorations, and delicious treats at our mini market.",
-  },
-  {
-    icon: "🍽️",
-    defaultName: "Dinner Feast",
-    defaultDescription:
-      "A magnificent Christmas dinner with traditional and modern dishes.",
-  },
-];
+const eventIcons: Record<string, string> = {
+  "Base Expenses": "🛒",
+  "Performance": "🎭",
+  "Group Alcohol": "🍷",
+};
 
 export default function EventsPage() {
   const { data: session, status } = useSession();
@@ -103,10 +88,7 @@ export default function EventsPage() {
   };
 
   const getEventIcon = (eventName: string) => {
-    const match = defaultEvents.find((e) =>
-      eventName.toLowerCase().includes(e.defaultName.toLowerCase().split(" ")[0])
-    );
-    return match?.icon || "🎉";
+    return eventIcons[eventName] || "🎉";
   };
 
   if (status === "loading" || loading) {
@@ -132,13 +114,31 @@ export default function EventsPage() {
         </p>
       </div>
 
+      {/* Total Estimate Box */}
+      <div className="christmas-card p-5 mb-8 bg-gradient-to-r from-christmas-green/20 to-christmas-red/20">
+        <div className="flex items-center gap-4">
+          <span className="text-4xl">💰</span>
+          <div>
+            <h3 className="text-lg font-bold text-christmas-gold">
+              Estimated Total Cost
+            </h3>
+            <p className="text-christmas-cream text-xl font-semibold">
+              Approximately <span className="text-christmas-gold">800 - 1,100 ₺</span>
+            </p>
+            <p className="text-christmas-cream/60 text-sm mt-1">
+              Final prices will be announced soon
+            </p>
+          </div>
+        </div>
+      </div>
+
       {/* Info Box */}
       <div className="christmas-card p-4 mb-8 flex items-start gap-3">
         <span className="text-2xl">💡</span>
         <div className="text-sm text-christmas-cream/80">
           <p>
-            Let us know which events you&apos;re interested in attending. Some
-            events may have additional costs. Your response helps us plan better!
+            Let us know which events you&apos;re interested in attending. 
+            Your response helps us plan better! Prices will be finalized and announced soon.
           </p>
         </div>
       </div>
@@ -156,75 +156,85 @@ export default function EventsPage() {
           </p>
         </div>
       ) : (
-        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {events.map((event) => {
-            const myRegistration = getMyRegistration(event);
-            const joiningCount = getJoiningCount(event);
+        <>
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {events.map((event) => {
+              const myRegistration = getMyRegistration(event);
+              const joiningCount = getJoiningCount(event);
 
-            return (
-              <div key={event.id} className="christmas-card overflow-hidden">
-                {/* Event Image/Icon Header */}
-                <div className="bg-gradient-to-br from-christmas-red/50 to-christmas-green/50 p-8 text-center">
-                  <span className="text-6xl">{getEventIcon(event.name)}</span>
-                </div>
+              return (
+                <div key={event.id} className="christmas-card overflow-hidden">
+                  {/* Event Image/Icon Header */}
+                  <div className="bg-gradient-to-br from-christmas-red/50 to-christmas-green/50 p-8 text-center">
+                    <span className="text-6xl">{getEventIcon(event.name)}</span>
+                  </div>
 
-                <div className="p-6">
-                  <div className="flex justify-between items-start mb-2">
-                    <h3 className="text-xl font-bold text-christmas-gold">
-                      {event.name}
-                    </h3>
-                    {event.price > 0 && (
-                      <span className="bg-christmas-gold text-christmas-dark px-2 py-1 rounded text-sm font-bold">
-                        ${event.price}
+                  <div className="p-6">
+                    <div className="flex justify-between items-start mb-2">
+                      <h3 className="text-xl font-bold text-christmas-gold">
+                        {event.name}
+                      </h3>
+                      <span className="bg-christmas-gold/20 text-christmas-gold px-2 py-1 rounded text-xs font-medium">
+                        TBA
                       </span>
+                    </div>
+
+                    {event.description && (
+                      <p className="text-christmas-cream/70 text-sm mb-4">
+                        {event.description}
+                      </p>
                     )}
-                  </div>
 
-                  {event.description && (
-                    <p className="text-christmas-cream/70 text-sm mb-4">
-                      {event.description}
-                    </p>
-                  )}
+                    <div className="text-xs text-christmas-cream/50 mb-4">
+                      {joiningCount} {joiningCount === 1 ? "person" : "people"}{" "}
+                      joining
+                    </div>
 
-                  <div className="text-xs text-christmas-cream/50 mb-4">
-                    {joiningCount} {joiningCount === 1 ? "person" : "people"}{" "}
-                    joining
-                  </div>
-
-                  {/* Action Buttons */}
-                  <div className="flex gap-2">
-                    <button
-                      onClick={() => handleJoin(event.id, true)}
-                      disabled={actionLoading === event.id}
-                      className={`flex-1 py-2 rounded-lg text-sm font-medium transition ${
-                        myRegistration?.joining
-                          ? "bg-green-600 text-white"
-                          : "bg-christmas-green/30 text-christmas-cream hover:bg-christmas-green/50"
-                      }`}
-                    >
-                      {myRegistration?.joining ? "✓ Joining" : "Join"}
-                    </button>
-                    <button
-                      onClick={() => handleJoin(event.id, false)}
-                      disabled={actionLoading === event.id}
-                      className={`flex-1 py-2 rounded-lg text-sm font-medium transition ${
-                        myRegistration && !myRegistration.joining
-                          ? "bg-red-600/80 text-white"
-                          : "bg-red-900/30 text-christmas-cream/70 hover:bg-red-900/50"
-                      }`}
-                    >
-                      {myRegistration && !myRegistration.joining
-                        ? "✓ Not Joining"
-                        : "Not Joining"}
-                    </button>
+                    {/* Action Buttons */}
+                    <div className="flex gap-2">
+                      <button
+                        onClick={() => handleJoin(event.id, true)}
+                        disabled={actionLoading === event.id}
+                        className={`flex-1 py-2 rounded-lg text-sm font-medium transition ${
+                          myRegistration?.joining
+                            ? "bg-green-600 text-white"
+                            : "bg-christmas-green/30 text-christmas-cream hover:bg-christmas-green/50"
+                        }`}
+                      >
+                        {myRegistration?.joining ? "✓ Joining" : "Join"}
+                      </button>
+                      <button
+                        onClick={() => handleJoin(event.id, false)}
+                        disabled={actionLoading === event.id}
+                        className={`flex-1 py-2 rounded-lg text-sm font-medium transition ${
+                          myRegistration && !myRegistration.joining
+                            ? "bg-red-600/80 text-white"
+                            : "bg-red-900/30 text-christmas-cream/70 hover:bg-red-900/50"
+                        }`}
+                      >
+                        {myRegistration && !myRegistration.joining
+                          ? "✓ Not Joining"
+                          : "Not Joining"}
+                      </button>
+                    </div>
                   </div>
                 </div>
-              </div>
-            );
-          })}
-        </div>
+              );
+            })}
+          </div>
+
+          {/* More Events Coming Soon */}
+          <div className="mt-8 christmas-card p-6 text-center border-dashed border-2 border-christmas-gold/30">
+            <span className="text-4xl block mb-3">🎊</span>
+            <h3 className="text-xl font-bold text-christmas-gold mb-2">
+              More Events Coming Soon!
+            </h3>
+            <p className="text-christmas-cream/60 text-sm">
+              We&apos;re preparing more exciting activities for the party. Stay tuned!
+            </p>
+          </div>
+        </>
       )}
     </div>
   );
 }
-
