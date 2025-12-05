@@ -196,7 +196,7 @@ export default function RegisterPage() {
               </p>
               <p className="text-christmas-gold font-medium">{email}</p>
               <p className="text-xs text-christmas-cream/50 mt-2">
-                (Check the console in development mode)
+                Please check your inbox (and spam folder)
               </p>
             </div>
 
