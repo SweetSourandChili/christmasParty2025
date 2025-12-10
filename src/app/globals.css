@@ -22,9 +22,14 @@
   box-sizing: border-box;
 }
 
+html {
+  background: #0c1f13;
+}
+
 body {
   font-family: "Crimson Pro", Georgia, serif;
   background: linear-gradient(180deg, #0c1f13 0%, #1a3a25 50%, #0c1f13 100%);
+  background-attachment: fixed;
   min-height: 100vh;
   color: var(--color-christmas-cream);
 }
