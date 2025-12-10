@@ -4,21 +4,23 @@ import { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useSession, signOut } from "next-auth/react";
+import { useLanguage } from "./LanguageProvider";
 
 export default function Navbar() {
   const pathname = usePathname();
   const { data: session } = useSession();
+  const { language, setLanguage, t } = useLanguage();
 
   const navLinks = [
-    { href: "/dashboard", label: "Dashboard" },
-    { href: "/performances", label: "Performances" },
-    { href: "/events", label: "Events" },
-    { href: "/tasks", label: "Contributions" },
-    { href: "/ticket", label: "My Ticket" },
+    { href: "/dashboard", labelKey: "dashboard" as const },
+    { href: "/performances", labelKey: "performances" as const },
+    { href: "/events", labelKey: "events" as const },
+    { href: "/tasks", labelKey: "contributions" as const },
+    { href: "/ticket", labelKey: "myTicket" as const },
   ];
 
   if (session?.user?.isAdmin) {
-    navLinks.push({ href: "/admin", label: "Admin Panel" });
+    navLinks.push({ href: "/admin", labelKey: "admin" as const });
   }
 
   return (
@@ -27,7 +29,7 @@ export default function Navbar() {
         <div className="flex items-center justify-between h-16">
           <Link href="/dashboard" className="flex items-center gap-2">
             <span className="text-2xl">🎄</span>
-            <span className="font-bold text-xl text-christmas-gold">
+            <span className="font-bold text-xl text-christmas-gold hidden sm:block">
               KIKI Christmas Event
             </span>
           </Link>
@@ -43,7 +45,7 @@ export default function Navbar() {
                       pathname === link.href ? "active" : ""
                     }`}
                   >
-                    {link.label}
+                    {t(link.labelKey)}
                   </Link>
                 ))}
                 <div className="h-6 w-px bg-christmas-gold/30 mx-2" />
@@ -54,7 +56,7 @@ export default function Navbar() {
                   onClick={() => signOut({ callbackUrl: "/login" })}
                   className="nav-link text-red-400 hover:text-red-300"
                 >
-                  Logout
+                  {t("logout")}
                 </button>
               </>
             ) : (
@@ -65,7 +67,7 @@ export default function Navbar() {
                     pathname === "/login" ? "active" : ""
                   }`}
                 >
-                  Login
+                  {t("login")}
                 </Link>
                 <Link
                   href="/register"
@@ -73,14 +75,31 @@ export default function Navbar() {
                     pathname === "/register" ? "active" : ""
                   }`}
                 >
-                  Register
+                  {t("register")}
                 </Link>
               </>
             )}
+            
+            {/* Language Toggle */}
+            <div className="h-6 w-px bg-christmas-gold/30 mx-2" />
+            <button
+              onClick={() => setLanguage(language === "en" ? "tr" : "en")}
+              className="flex items-center gap-1 px-2 py-1 rounded-lg bg-christmas-green/30 hover:bg-christmas-green/50 transition text-sm font-medium"
+              title={language === "en" ? "Türkçe'ye geç" : "Switch to English"}
+            >
+              {language === "en" ? "🇬🇧 EN" : "🇹🇷 TR"}
+            </button>
           </div>
 
           {/* Mobile menu button */}
-          <div className="md:hidden">
+          <div className="md:hidden flex items-center gap-2">
+            {/* Language Toggle Mobile */}
+            <button
+              onClick={() => setLanguage(language === "en" ? "tr" : "en")}
+              className="flex items-center gap-1 px-2 py-1 rounded-lg bg-christmas-green/30 hover:bg-christmas-green/50 transition text-sm font-medium"
+            >
+              {language === "en" ? "🇬🇧" : "🇹🇷"}
+            </button>
             <MobileMenu
               session={session}
               pathname={pathname}
@@ -100,9 +119,10 @@ function MobileMenu({
 }: {
   session: any;
   pathname: string;
-  navLinks: { href: string; label: string }[];
+  navLinks: { href: string; labelKey: string }[];
 }) {
   const [isOpen, setIsOpen] = useState(false);
+  const { t } = useLanguage();
 
   return (
     <div className="relative">
@@ -147,7 +167,7 @@ function MobileMenu({
                     pathname === link.href ? "active" : ""
                   }`}
                 >
-                  {link.label}
+                  {t(link.labelKey as any)}
                 </Link>
               ))}
               <button
@@ -157,7 +177,7 @@ function MobileMenu({
                 }}
                 className="block w-full text-left nav-link text-red-400 hover:text-red-300"
               >
-                Logout
+                {t("logout")}
               </button>
             </>
           ) : (
@@ -167,14 +187,14 @@ function MobileMenu({
                 onClick={() => setIsOpen(false)}
                 className="block nav-link"
               >
-                Login
+                {t("login")}
               </Link>
               <Link
                 href="/register"
                 onClick={() => setIsOpen(false)}
                 className="block nav-link"
               >
-                Register
+                {t("register")}
               </Link>
             </>
           )}

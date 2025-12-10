@@ -8,6 +8,7 @@ import Countdown from "@/components/Countdown";
 import TicketStatus from "@/components/TicketStatus";
 import EventReminderModal from "@/components/EventReminderModal";
 import FeedbackForm from "@/components/FeedbackForm";
+import { useLanguage } from "@/components/LanguageProvider";
 
 interface Ticket {
   id: string;
@@ -32,6 +33,7 @@ interface Ticket {
 export default function DashboardPage() {
   const { data: session, status } = useSession();
   const router = useRouter();
+  const { t } = useLanguage();
   const [ticket, setTicket] = useState<Ticket | null>(null);
   const [loading, setLoading] = useState(true);
   const [showReminderModal, setShowReminderModal] = useState(false);
@@ -97,10 +99,10 @@ export default function DashboardPage() {
       {/* Welcome Section */}
       <div className="text-center mb-12">
         <h1 className="text-4xl sm:text-5xl font-bold text-christmas-gold mb-4">
-          🎄 Welcome, {session.user.name}! 🎄
+          🎄 {t("welcomeUser")}, {session.user.name}! 🎄
         </h1>
         <p className="text-xl text-christmas-cream/80">
-          Get ready for the KIKI Christmas Event!
+          {t("getReady")}
         </p>
       </div>
 
@@ -116,15 +118,13 @@ export default function DashboardPage() {
             <span className="text-3xl">⚠️</span>
             <div>
               <h3 className="text-xl font-bold text-christmas-gold mb-2">
-                Your Ticket is Not Activated
+                {t("ticketNotActivated")}
               </h3>
               <p className="text-christmas-cream/80 mb-4">
-                To activate your ticket and join the party, you need to create
-                or register for a performance. Once registered, complete the
-                payment to fully activate your ticket.
+                {t("ticketNotActivatedDesc")}
               </p>
               <Link href="/performances" className="btn-christmas inline-block">
-                View Performances →
+                {t("viewPerformances")}
               </Link>
             </div>
           </div>
@@ -136,7 +136,7 @@ export default function DashboardPage() {
         {/* My Ticket Card */}
         <div className="christmas-card p-6">
           <h2 className="text-2xl font-bold text-christmas-gold mb-4 flex items-center gap-2">
-            🎫 My Ticket
+            🎫 {t("myTicketCard")}
           </h2>
           {ticket && (
             <div>
@@ -145,7 +145,7 @@ export default function DashboardPage() {
                 href="/ticket"
                 className="btn-christmas-green inline-block mt-4"
               >
-                View Full Ticket →
+                {t("viewFullTicket")}
               </Link>
             </div>
           )}
@@ -154,7 +154,7 @@ export default function DashboardPage() {
         {/* My Performances Card */}
         <div className="christmas-card p-6">
           <h2 className="text-2xl font-bold text-christmas-gold mb-4 flex items-center gap-2">
-            🎭 My Performances
+            🎭 {t("myPerformances")}
           </h2>
           {ticket?.user?.registrations?.length ? (
             <ul className="space-y-2 mb-4">
@@ -170,14 +170,14 @@ export default function DashboardPage() {
             </ul>
           ) : (
             <p className="text-christmas-cream/70 mb-4">
-              You haven&apos;t registered for any performances yet.
+              {t("noPerformances")}
             </p>
           )}
           <Link
             href="/performances"
             className="btn-christmas-green inline-block"
           >
-            Browse Performances →
+            {t("browsePerformances")}
           </Link>
         </div>
       </div>
@@ -185,7 +185,7 @@ export default function DashboardPage() {
       {/* Quick Links */}
       <div className="christmas-card p-6 mb-8">
         <h2 className="text-2xl font-bold text-christmas-gold mb-6 text-center">
-          🌟 Quick Actions
+          🌟 {t("quickActions")}
         </h2>
         <div className="grid sm:grid-cols-4 gap-4">
           <Link
@@ -195,9 +195,9 @@ export default function DashboardPage() {
             <span className="text-4xl block mb-2 group-hover:scale-110 transition">
               🎭
             </span>
-            <span className="text-christmas-gold font-medium">Performances</span>
+            <span className="text-christmas-gold font-medium">{t("performances")}</span>
             <p className="text-sm text-christmas-cream/60 mt-1">
-              Create or join
+              {t("createOrJoin")}
             </p>
           </Link>
 
@@ -208,9 +208,9 @@ export default function DashboardPage() {
             <span className="text-4xl block mb-2 group-hover:scale-110 transition">
               🎉
             </span>
-            <span className="text-christmas-gold font-medium">Events</span>
+            <span className="text-christmas-gold font-medium">{t("events")}</span>
             <p className="text-sm text-christmas-cream/60 mt-1">
-              Choose events
+              {t("chooseEvents")}
             </p>
           </Link>
 
@@ -221,9 +221,9 @@ export default function DashboardPage() {
             <span className="text-4xl block mb-2 group-hover:scale-110 transition">
               📋
             </span>
-            <span className="text-christmas-gold font-medium">Contributions</span>
+            <span className="text-christmas-gold font-medium">{t("contributions")}</span>
             <p className="text-sm text-christmas-cream/60 mt-1">
-              What can you bring?
+              {t("whatCanYouBring")}
             </p>
           </Link>
 
@@ -234,9 +234,9 @@ export default function DashboardPage() {
             <span className="text-4xl block mb-2 group-hover:scale-110 transition">
               🎫
             </span>
-            <span className="text-christmas-gold font-medium">My Ticket</span>
+            <span className="text-christmas-gold font-medium">{t("myTicket")}</span>
             <p className="text-sm text-christmas-cream/60 mt-1">
-              View details
+              {t("viewDetails")}
             </p>
           </Link>
         </div>
@@ -254,10 +254,10 @@ export default function DashboardPage() {
           </div>
           <div className="flex-1 text-center sm:text-left">
             <h2 className="text-2xl font-bold text-christmas-gold mb-2 flex items-center justify-center sm:justify-start gap-2">
-              🎵 Party Playlist
+              🎵 {t("partyPlaylist")}
             </h2>
             <p className="text-christmas-cream/80 mb-4">
-              Help us create the perfect party atmosphere! Add your favorite songs to our collaborative Spotify playlist.
+              {t("playlistDesc")}
             </p>
             <a
               href="https://open.spotify.com/playlist/3vPCOOhAKIzw5iMf33M662?si=ec1e7841fdea414c"
@@ -268,7 +268,7 @@ export default function DashboardPage() {
               <svg className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">
                 <path d="M12 0C5.4 0 0 5.4 0 12s5.4 12 12 12 12-5.4 12-12S18.66 0 12 0zm5.521 17.34c-.24.359-.66.48-1.021.24-2.82-1.74-6.36-2.101-10.561-1.141-.418.122-.779-.179-.899-.539-.12-.421.18-.78.54-.9 4.56-1.021 8.52-.6 11.64 1.32.42.18.479.659.301 1.02zm1.44-3.3c-.301.42-.841.6-1.262.3-3.239-1.98-8.159-2.58-11.939-1.38-.479.12-1.02-.12-1.14-.6-.12-.48.12-1.021.6-1.141C9.6 9.9 15 10.561 18.72 12.84c.361.181.54.78.241 1.2zm.12-3.36C15.24 8.4 8.82 8.16 5.16 9.301c-.6.179-1.2-.181-1.38-.721-.18-.601.18-1.2.72-1.381 4.26-1.26 11.28-1.02 15.721 1.621.539.3.719 1.02.419 1.56-.299.421-1.02.599-1.559.3z"/>
               </svg>
-              Add Your Music on Spotify
+              {t("addMusicSpotify")}
             </a>
           </div>
         </div>

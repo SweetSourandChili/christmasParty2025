@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState, useRef } from "react";
+import { useLanguage } from "./LanguageProvider";
 
 interface IllusionOverlayProps {
   isActive: boolean;
@@ -9,6 +10,7 @@ interface IllusionOverlayProps {
 export default function IllusionOverlay({ isActive }: IllusionOverlayProps) {
   const [phase, setPhase] = useState<"hidden" | "message" | "card-reveal" | "background">("hidden");
   const timersRef = useRef<NodeJS.Timeout[]>([]);
+  const { t } = useLanguage();
 
   // Clear all timers
   const clearTimers = () => {
@@ -71,7 +73,7 @@ export default function IllusionOverlay({ isActive }: IllusionOverlayProps) {
                 animation: "pulse 2s ease-in-out infinite",
               }}
             >
-              Reality is merely an illusion...
+              {t("illusionMessage")}
             </h1>
             <p
               className="text-xl md:text-2xl text-white/60 font-light tracking-wider"
@@ -80,7 +82,7 @@ export default function IllusionOverlay({ isActive }: IllusionOverlayProps) {
                 animation: "fadeInUp 2s ease-out forwards",
               }}
             >
-              ...albeit a very persistent one
+              {t("illusionSubtext")}
             </p>
             <div className="mt-12 flex justify-center gap-4 opacity-50">
               <span className="text-3xl animate-bounce" style={{ animationDelay: "0s" }}>♠</span>
@@ -191,7 +193,7 @@ export default function IllusionOverlay({ isActive }: IllusionOverlayProps) {
                 opacity: 0,
               }}
             >
-              Three of Spades
+              {t("threeOfSpades")}
             </p>
             <p
               className="text-lg text-white/50 mt-2 tracking-wider"
@@ -201,7 +203,7 @@ export default function IllusionOverlay({ isActive }: IllusionOverlayProps) {
                 opacity: 0,
               }}
             >
-              The cards have been dealt
+              {t("cardsDealt")}
             </p>
           </div>
         </div>

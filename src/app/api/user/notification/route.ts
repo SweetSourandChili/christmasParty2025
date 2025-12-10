@@ -62,3 +62,35 @@ export async function POST() {
   }
 }
 
+// PUT set notification count to specific value
+export async function PUT(request: NextRequest) {
+  try {
+    const session = await getServerSession(authOptions);
+
+    if (!session?.user?.id) {
+      return NextResponse.json(
+        { error: "Unauthorized" },
+        { status: 401 }
+      );
+    }
+
+    const { count } = await request.json();
+
+    const user = await prisma.user.update({
+      where: { id: session.user.id },
+      data: {
+        notificationCount: count,
+      },
+      select: { notificationCount: true },
+    });
+
+    return NextResponse.json({ notificationCount: user.notificationCount });
+  } catch (error) {
+    console.error("Set notification count error:", error);
+    return NextResponse.json(
+      { error: "Failed to set notification count" },
+      { status: 500 }
+    );
+  }
+}
+

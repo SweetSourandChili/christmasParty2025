@@ -53,6 +53,7 @@ export default function PerformancesPage() {
     description: "",
     maxParticipants: 3,
   });
+  const [editingPerformance, setEditingPerformance] = useState<Performance | null>(null);
   const [creating, setCreating] = useState(false);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
   const [votingLoading, setVotingLoading] = useState(false);
@@ -229,6 +230,36 @@ export default function PerformancesPage() {
     }
   };
 
+  const handleEditPerformance = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingPerformance) return;
+
+    setActionLoading(`edit-${editingPerformance.id}`);
+
+    try {
+      const res = await fetch(`/api/performances/${editingPerformance.id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: editingPerformance.name,
+          description: editingPerformance.description,
+        }),
+      });
+
+      if (!res.ok) {
+        const data = await res.json();
+        throw new Error(data.error);
+      }
+
+      setEditingPerformance(null);
+      fetchPerformances();
+    } catch (error: any) {
+      alert(error.message);
+    } finally {
+      setActionLoading(null);
+    }
+  };
+
   const isRegistered = (performance: Performance) => {
     return performance.registrations.some(
       (reg) => reg.user.id === session?.user?.id
@@ -357,13 +388,24 @@ export default function PerformancesPage() {
                     </div>
                   </div>
 
-                  {/* Comments Button */}
-                  <button
-                    onClick={() => setCommentsModal({ id: performance.id, name: performance.name })}
-                    className="w-full mb-3 py-2 text-sm text-christmas-cream/70 hover:text-christmas-gold border border-christmas-gold/30 rounded-lg hover:border-christmas-gold/50 transition flex items-center justify-center gap-2"
-                  >
-                    💬 View Comments
-                  </button>
+                  {/* Comments & Edit Buttons */}
+                  <div className="flex gap-2 mb-3">
+                    <button
+                      onClick={() => setCommentsModal({ id: performance.id, name: performance.name })}
+                      className="flex-1 py-2 text-sm text-christmas-cream/70 hover:text-christmas-gold border border-christmas-gold/30 rounded-lg hover:border-christmas-gold/50 transition flex items-center justify-center gap-2"
+                    >
+                      💬 Comments
+                    </button>
+                    {isRegistered(performance) && (
+                      <button
+                        onClick={() => setEditingPerformance(performance)}
+                        className="py-2 px-3 text-sm text-christmas-cream/70 hover:text-christmas-gold border border-christmas-gold/30 rounded-lg hover:border-christmas-gold/50 transition"
+                        title="Edit Performance"
+                      >
+                        ✏️
+                      </button>
+                    )}
+                  </div>
 
                   <div className="flex gap-2">
                     {isRegistered(performance) ? (
@@ -623,6 +665,72 @@ export default function PerformancesPage() {
                   className="btn-christmas flex-1"
                 >
                   {creating ? "Creating..." : "Create"}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Edit Modal */}
+      {editingPerformance && (
+        <div className="modal-overlay" onClick={() => setEditingPerformance(null)}>
+          <div
+            className="christmas-card w-full max-w-md p-6 m-4"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h2 className="text-2xl font-bold text-christmas-gold mb-6">
+              ✏️ Edit Performance
+            </h2>
+
+            <form onSubmit={handleEditPerformance} className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-christmas-gold mb-2">
+                  Performance Name *
+                </label>
+                <input
+                  type="text"
+                  value={editingPerformance.name}
+                  onChange={(e) =>
+                    setEditingPerformance({ ...editingPerformance, name: e.target.value })
+                  }
+                  placeholder="e.g., Christmas Carol Singers"
+                  className="input-christmas w-full"
+                  required
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-christmas-gold mb-2">
+                  Description
+                </label>
+                <textarea
+                  value={editingPerformance.description || ""}
+                  onChange={(e) =>
+                    setEditingPerformance({
+                      ...editingPerformance,
+                      description: e.target.value,
+                    })
+                  }
+                  placeholder="Tell us about your performance..."
+                  className="input-christmas w-full h-24 resize-none"
+                />
+              </div>
+
+              <div className="flex gap-3 pt-4">
+                <button
+                  type="button"
+                  onClick={() => setEditingPerformance(null)}
+                  className="flex-1 py-2 border border-christmas-gold/50 rounded-lg text-christmas-cream hover:bg-christmas-gold/10"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={actionLoading === `edit-${editingPerformance.id}`}
+                  className="btn-christmas flex-1"
+                >
+                  {actionLoading === `edit-${editingPerformance.id}` ? "Saving..." : "Save Changes"}
                 </button>
               </div>
             </form>

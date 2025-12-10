@@ -1,14 +1,16 @@
 "use client";
 
-import { useState, Suspense } from "react";
+import { useState, useEffect, Suspense } from "react";
 import { signIn } from "next-auth/react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
+import { useLanguage } from "@/components/LanguageProvider";
 
 function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const registered = searchParams.get("registered");
+  const { t } = useLanguage();
   
   const [phone, setPhone] = useState("");
   const [password, setPassword] = useState("");
@@ -44,7 +46,7 @@ function LoginForm() {
     <>
       {registered && (
         <div className="bg-green-900/50 border border-green-500 text-green-200 px-4 py-3 rounded-lg mb-6">
-          🎉 Registration successful! Please login with your credentials.
+          {t("registrationSuccess")}
         </div>
       )}
 
@@ -57,7 +59,7 @@ function LoginForm() {
       <form onSubmit={handleLogin} className="space-y-6">
         <div>
           <label className="block text-sm font-medium text-christmas-gold mb-2">
-            Phone Number
+            {t("phone")}
           </label>
           <input
             type="tel"
@@ -71,7 +73,7 @@ function LoginForm() {
 
         <div>
           <label className="block text-sm font-medium text-christmas-gold mb-2">
-            Password
+            {t("password")}
           </label>
           <input
             type="password"
@@ -91,10 +93,10 @@ function LoginForm() {
           {loading ? (
             <span className="flex items-center justify-center gap-2">
               <span className="spinner w-5 h-5" />
-              Signing in...
+              {t("signingIn")}
             </span>
           ) : (
-            "🎄 Sign In"
+            t("loginButton")
           )}
         </button>
       </form>
@@ -102,35 +104,56 @@ function LoginForm() {
   );
 }
 
+function LoginContent() {
+  const { t } = useLanguage();
+  const [isReturningUser, setIsReturningUser] = useState(false);
+  const [mounted, setMounted] = useState(false);
+  
+  useEffect(() => {
+    setMounted(true);
+    // Check if user has visited before by looking for any stored data
+    const hasVisited = localStorage.getItem("language") || localStorage.getItem("hasVisited");
+    if (hasVisited) {
+      setIsReturningUser(true);
+    }
+    // Mark that user has visited
+    localStorage.setItem("hasVisited", "true");
+  }, []);
+  
+  return (
+    <div className="christmas-card w-full max-w-md p-8">
+      <div className="text-center mb-8">
+        <h1 className="text-3xl font-bold text-christmas-gold mb-2">
+          🎅 {mounted ? (isReturningUser ? t("loginTitle") : t("loginTitleNew")) : t("loginTitleNew")}
+        </h1>
+        <p className="text-christmas-cream/70">
+          {mounted ? (isReturningUser ? t("loginDesc") : t("loginDescNew")) : t("loginDescNew")}
+        </p>
+      </div>
+
+      <Suspense fallback={<div className="flex justify-center"><span className="spinner w-8 h-8" /></div>}>
+        <LoginForm />
+      </Suspense>
+
+      <div className="mt-8 text-center border-t border-christmas-gold/30 pt-6">
+        <p className="text-christmas-cream/70">
+          {t("noAccount")}{" "}
+          <Link
+            href="/register"
+            className="text-christmas-gold hover:underline"
+          >
+            {t("signUp")}
+          </Link>
+        </p>
+      </div>
+    </div>
+  );
+}
+
 export default function LoginPage() {
   return (
     <div className="min-h-[calc(100vh-4rem)] flex items-center justify-center p-4">
-      <div className="christmas-card w-full max-w-md p-8">
-        <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold text-christmas-gold mb-2">
-            🎅 Welcome Back!
-          </h1>
-          <p className="text-christmas-cream/70">
-            Sign in to your KIKI Christmas Event account
-          </p>
-        </div>
-
-        <Suspense fallback={<div className="flex justify-center"><span className="spinner w-8 h-8" /></div>}>
-          <LoginForm />
-        </Suspense>
-
-        <div className="mt-8 text-center border-t border-christmas-gold/30 pt-6">
-          <p className="text-christmas-cream/70">
-            Don&apos;t have an account?{" "}
-            <Link
-              href="/register"
-              className="text-christmas-gold hover:underline"
-            >
-              Register here
-            </Link>
-          </p>
-        </div>
-      </div>
+      <LoginContent />
     </div>
   );
 }

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useLanguage } from "./LanguageProvider";
 
 // Event date: December 31, 2025, 6:00 PM UTC+3
 const EVENT_DATE = new Date("2025-12-31T18:00:00+03:00");
@@ -13,6 +14,7 @@ interface TimeLeft {
 }
 
 export default function Countdown() {
+  const { t, language } = useLanguage();
   const [timeLeft, setTimeLeft] = useState<TimeLeft>({
     days: 0,
     hours: 0,
@@ -49,10 +51,17 @@ export default function Countdown() {
     return () => clearInterval(timer);
   }, []);
 
+  const labels = {
+    days: t("days"),
+    hours: t("hours"),
+    minutes: t("minutes"),
+    seconds: t("seconds"),
+  };
+
   if (!mounted) {
     return (
       <div className="countdown-container">
-        {["Days", "Hours", "Minutes", "Seconds"].map((label) => (
+        {Object.values(labels).map((label) => (
           <div key={label} className="countdown-item">
             <div className="countdown-number">--</div>
             <div className="countdown-label">{label}</div>
@@ -62,31 +71,43 @@ export default function Countdown() {
     );
   }
 
+  const isPartyStarted = timeLeft.days === 0 && timeLeft.hours === 0 && 
+                         timeLeft.minutes === 0 && timeLeft.seconds === 0;
+
+  if (isPartyStarted) {
+    return (
+      <div className="text-center">
+        <h2 className="text-3xl mb-4 glow-text">{t("partyStarted")}</h2>
+      </div>
+    );
+  }
+
   return (
     <div className="text-center">
-      <h2 className="text-2xl mb-4 glow-text">🎄 Time Until The Party 🎄</h2>
+      <h2 className="text-2xl mb-4 glow-text">
+        🎄 {language === "tr" ? "Partiye Kalan Süre" : "Time Until The Party"} 🎄
+      </h2>
       <p className="text-sm mb-6 text-christmas-cream/80">
-        December 31, 2025 at 6:00 PM (UTC+3)
+        {language === "tr" ? "31 Aralık 2025, Saat 18:00 (UTC+3)" : "December 31, 2025 at 6:00 PM (UTC+3)"}
       </p>
       <div className="countdown-container">
         <div className="countdown-item">
           <div className="countdown-number">{timeLeft.days}</div>
-          <div className="countdown-label">Days</div>
+          <div className="countdown-label">{t("days")}</div>
         </div>
         <div className="countdown-item">
           <div className="countdown-number">{timeLeft.hours}</div>
-          <div className="countdown-label">Hours</div>
+          <div className="countdown-label">{t("hours")}</div>
         </div>
         <div className="countdown-item">
           <div className="countdown-number">{timeLeft.minutes}</div>
-          <div className="countdown-label">Minutes</div>
+          <div className="countdown-label">{t("minutes")}</div>
         </div>
         <div className="countdown-item">
           <div className="countdown-number">{timeLeft.seconds}</div>
-          <div className="countdown-label">Seconds</div>
+          <div className="countdown-label">{t("seconds")}</div>
         </div>
       </div>
     </div>
   );
 }
-

@@ -1,8 +1,10 @@
 "use client";
 
 import { useState } from "react";
+import { useLanguage } from "./LanguageProvider";
 
 export default function FeedbackForm() {
+  const { t } = useLanguage();
   const [content, setContent] = useState("");
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
@@ -39,12 +41,12 @@ export default function FeedbackForm() {
   return (
     <div className="christmas-card p-6">
       <h3 className="text-xl font-bold text-christmas-gold mb-4 flex items-center gap-2">
-        💬 Share Your Feedback
+        💬 {t("feedbackTitle")}
       </h3>
       
       {success && (
         <div className="bg-green-900/50 border border-green-500 text-green-200 px-4 py-3 rounded-lg mb-4">
-          ✓ Thank you for your feedback!
+          ✓ {t("feedbackSuccess")}
         </div>
       )}
 
@@ -58,25 +60,24 @@ export default function FeedbackForm() {
         <textarea
           value={content}
           onChange={(e) => setContent(e.target.value)}
-          placeholder="Share your thoughts, suggestions, or excitement about the party..."
+          placeholder={t("feedbackPlaceholder")}
           className="input-christmas w-full h-24 resize-none"
           maxLength={500}
           required
         />
         <div className="flex items-center justify-between">
           <span className="text-xs text-christmas-cream/50">
-            {content.length}/500 characters
+            {content.length}/500
           </span>
           <button
             type="submit"
             disabled={loading || content.trim().length === 0}
             className="btn-christmas-green px-6"
           >
-            {loading ? "Sending..." : "Send Feedback"}
+            {loading ? "..." : t("feedbackSubmit")}
           </button>
         </div>
       </form>
     </div>
   );
 }
-

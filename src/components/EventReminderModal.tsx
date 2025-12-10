@@ -1,6 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
+import { useLanguage } from "./LanguageProvider";
 
 interface EventReminderModalProps {
   onClose: () => void;
@@ -8,6 +10,8 @@ interface EventReminderModalProps {
 
 export default function EventReminderModal({ onClose }: EventReminderModalProps) {
   const [isVisible, setIsVisible] = useState(false);
+  const router = useRouter();
+  const { t } = useLanguage();
 
   useEffect(() => {
     // Animate in
@@ -15,7 +19,7 @@ export default function EventReminderModal({ onClose }: EventReminderModalProps)
   }, []);
 
   const handleClose = async () => {
-    // Increment notification count
+    // Increment notification count by 1 (for "Later" or X button)
     try {
       await fetch("/api/user/notification", { method: "POST" });
     } catch (error) {
@@ -24,6 +28,25 @@ export default function EventReminderModal({ onClose }: EventReminderModalProps)
     
     setIsVisible(false);
     setTimeout(onClose, 300);
+  };
+
+  const handleViewEvents = async () => {
+    // Set notification count to 3 so it won't show again
+    try {
+      await fetch("/api/user/notification", { 
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ count: 3 })
+      });
+    } catch (error) {
+      console.error("Failed to update notification count:", error);
+    }
+    
+    setIsVisible(false);
+    setTimeout(() => {
+      onClose();
+      router.push("/events");
+    }, 300);
   };
 
   return (
@@ -58,11 +81,10 @@ export default function EventReminderModal({ onClose }: EventReminderModalProps)
         <div className="text-center">
           <div className="text-6xl mb-4">🎄</div>
           <h2 className="text-2xl font-bold text-christmas-gold mb-3">
-            Don&apos;t Forget!
+            {t("dontForget")}
           </h2>
           <p className="text-christmas-cream/80 mb-6">
-            Make sure to check the <strong className="text-christmas-gold">Events</strong> page 
-            and select which events you&apos;d like to join for the party!
+            {t("eventReminderText")}
           </p>
           
           <div className="flex gap-3">
@@ -70,19 +92,17 @@ export default function EventReminderModal({ onClose }: EventReminderModalProps)
               onClick={handleClose}
               className="flex-1 py-2 border border-christmas-gold/50 rounded-lg text-christmas-cream hover:bg-christmas-gold/10 transition"
             >
-              Later
+              {t("later")}
             </button>
-            <a
-              href="/events"
+            <button
+              onClick={handleViewEvents}
               className="flex-1 btn-christmas text-center"
-              onClick={handleClose}
             >
-              View Events →
-            </a>
+              {t("viewEvents")}
+            </button>
           </div>
         </div>
       </div>
     </div>
   );
 }
-

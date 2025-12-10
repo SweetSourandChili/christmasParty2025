@@ -3,9 +3,11 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { useLanguage } from "@/components/LanguageProvider";
 
 export default function RegisterPage() {
   const router = useRouter();
+  const { t } = useLanguage();
   const [step, setStep] = useState<"details" | "verification">("details");
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
@@ -21,12 +23,12 @@ export default function RegisterPage() {
     setError("");
 
     if (password !== confirmPassword) {
-      setError("Passwords do not match");
+      setError(t("passwordsNotMatch"));
       return;
     }
 
     if (password.length < 6) {
-      setError("Password must be at least 6 characters");
+      setError(t("passwordMinLength"));
       return;
     }
 
@@ -84,10 +86,10 @@ export default function RegisterPage() {
       <div className="christmas-card w-full max-w-md p-8">
         <div className="text-center mb-8">
           <h1 className="text-3xl font-bold text-christmas-gold mb-2">
-            🎄 Join the Party!
+            🎄 {t("registerTitle")}
           </h1>
           <p className="text-christmas-cream/70">
-            Create your account for the KIKI Christmas Event
+            {t("registerDesc")}
           </p>
         </div>
 
@@ -101,7 +103,7 @@ export default function RegisterPage() {
           <form onSubmit={handleSendCode} className="space-y-6">
             <div>
               <label className="block text-sm font-medium text-christmas-gold mb-2">
-                Full Name
+                {t("name")}
               </label>
               <input
                 type="text"
@@ -115,7 +117,7 @@ export default function RegisterPage() {
 
             <div>
               <label className="block text-sm font-medium text-christmas-gold mb-2">
-                Email Address
+                {t("email")}
               </label>
               <input
                 type="email"
@@ -129,7 +131,7 @@ export default function RegisterPage() {
 
             <div>
               <label className="block text-sm font-medium text-christmas-gold mb-2">
-                Phone Number
+                {t("phone")}
               </label>
               <input
                 type="tel"
@@ -140,13 +142,13 @@ export default function RegisterPage() {
                 required
               />
               <p className="text-xs text-christmas-cream/50 mt-1">
-                Used for login identification
+                {t("phoneHint")}
               </p>
             </div>
 
             <div>
               <label className="block text-sm font-medium text-christmas-gold mb-2">
-                Password
+                {t("password")}
               </label>
               <input
                 type="password"
@@ -161,7 +163,7 @@ export default function RegisterPage() {
 
             <div>
               <label className="block text-sm font-medium text-christmas-gold mb-2">
-                Confirm Password
+                {t("confirmPassword")}
               </label>
               <input
                 type="password"
@@ -181,10 +183,10 @@ export default function RegisterPage() {
               {loading ? (
                 <span className="flex items-center justify-center gap-2">
                   <span className="spinner w-5 h-5" />
-                  Processing...
+                  {t("processing")}
                 </span>
               ) : (
-                "🎄 Continue"
+                t("continueButton")
               )}
             </button>
           </form>
@@ -192,7 +194,7 @@ export default function RegisterPage() {
           <form onSubmit={handleRegister} className="space-y-6">
             <div className="text-center mb-4">
               <p className="text-christmas-cream/70">
-                Complete your registration for
+                {t("completeRegistration")}
               </p>
               <p className="text-christmas-gold font-medium">{email}</p>
             </div>
@@ -203,10 +205,10 @@ export default function RegisterPage() {
                 <span className="text-xl">📧</span>
                 <div>
                   <p className="text-blue-200 text-sm font-medium">
-                    Email verification coming soon!
+                    {t("emailVerificationSoon")}
                   </p>
                   <p className="text-blue-200/70 text-xs mt-1">
-                    For now, use this code: <strong className="text-christmas-gold">520260</strong>
+                    {t("tempCode")} <strong className="text-christmas-gold">520260</strong>
                   </p>
                 </div>
               </div>
@@ -214,7 +216,7 @@ export default function RegisterPage() {
 
             <div>
               <label className="block text-sm font-medium text-christmas-gold mb-2">
-                Verification Code
+                {t("verificationCode")}
               </label>
               <input
                 type="text"
@@ -235,10 +237,10 @@ export default function RegisterPage() {
               {loading ? (
                 <span className="flex items-center justify-center gap-2">
                   <span className="spinner w-5 h-5" />
-                  Creating Account...
+                  {t("creatingAccount")}
                 </span>
               ) : (
-                "🎁 Complete Registration"
+                t("registerButton")
               )}
             </button>
 
@@ -250,16 +252,16 @@ export default function RegisterPage() {
               }}
               className="w-full text-center text-christmas-cream/70 hover:text-christmas-gold transition"
             >
-              ← Back to details
+              {t("backToDetails")}
             </button>
           </form>
         )}
 
         <div className="mt-8 text-center border-t border-christmas-gold/30 pt-6">
           <p className="text-christmas-cream/70">
-            Already have an account?{" "}
+            {t("haveAccount")}{" "}
             <Link href="/login" className="text-christmas-gold hover:underline">
-              Login here
+              {t("signIn")}
             </Link>
           </p>
         </div>

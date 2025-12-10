@@ -5,6 +5,7 @@ import SessionProvider from "@/components/SessionProvider";
 import Navbar from "@/components/Navbar";
 import Snowflakes from "@/components/Snowflakes";
 import IllusionProvider from "@/components/IllusionProvider";
+import LanguageProvider from "@/components/LanguageProvider";
 
 const crimsonPro = Crimson_Pro({
   variable: "--font-crimson",
@@ -34,13 +35,15 @@ export default function RootLayout({
         className={`${crimsonPro.variable} ${playfair.variable} antialiased`}
       >
         <SessionProvider>
-          <IllusionProvider>
-            <Snowflakes />
-            <Navbar />
-            <main className="relative z-10 min-h-[calc(100vh-4rem)]">
-              {children}
-            </main>
-          </IllusionProvider>
+          <LanguageProvider>
+            <IllusionProvider>
+              <Snowflakes />
+              <Navbar />
+              <main className="relative z-10 min-h-[calc(100vh-4rem)]">
+                {children}
+              </main>
+            </IllusionProvider>
+          </LanguageProvider>
         </SessionProvider>
       </body>
     </html>
