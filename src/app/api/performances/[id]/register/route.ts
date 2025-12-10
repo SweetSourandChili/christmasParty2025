@@ -74,6 +74,30 @@ export async function POST(
       data: { status: "PAYMENT_PENDING" },
     });
 
+    // Auto-join user to "Performance" event
+    const performanceEvent = await prisma.event.findFirst({
+      where: { name: "Performance" },
+    });
+
+    if (performanceEvent) {
+      await prisma.eventRegistration.upsert({
+        where: {
+          userId_eventId: {
+            userId: session.user.id,
+            eventId: performanceEvent.id,
+          },
+        },
+        update: {
+          joining: true,
+        },
+        create: {
+          userId: session.user.id,
+          eventId: performanceEvent.id,
+          joining: true,
+        },
+      });
+    }
+
     return NextResponse.json(registration, { status: 201 });
   } catch (error) {
     console.error("Register to performance error:", error);
@@ -128,6 +152,30 @@ export async function DELETE(
           data: { status: "NOT_ACTIVATED" },
         });
       }
+
+      // Also remove from "Performance" event if no longer in any performance
+      const performanceEvent = await prisma.event.findFirst({
+        where: { name: "Performance" },
+      });
+
+      if (performanceEvent) {
+        await prisma.eventRegistration.upsert({
+          where: {
+            userId_eventId: {
+              userId: session.user.id,
+              eventId: performanceEvent.id,
+            },
+          },
+          update: {
+            joining: false,
+          },
+          create: {
+            userId: session.user.id,
+            eventId: performanceEvent.id,
+            joining: false,
+          },
+        });
+      }
     }
 
     return NextResponse.json({ message: "Unregistered successfully" });
@@ -139,4 +187,3 @@ export async function DELETE(
     );
   }
 }
-

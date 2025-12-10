@@ -59,17 +59,34 @@ interface Event {
   }[];
 }
 
+interface Feedback {
+  id: string;
+  content: string;
+  createdAt: string;
+  user: {
+    id: string;
+    name: string;
+  };
+}
+
+interface AppSettings {
+  votingEnabled: boolean;
+  illusionMode: boolean;
+}
+
 export default function AdminPage() {
   const { data: session, status } = useSession();
   const router = useRouter();
   const [users, setUsers] = useState<User[]>([]);
   const [stats, setStats] = useState<Stats | null>(null);
   const [events, setEvents] = useState<Event[]>([]);
+  const [feedbacks, setFeedbacks] = useState<Feedback[]>([]);
+  const [settings, setSettings] = useState<AppSettings | null>(null);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<"users" | "events" | "stats">(
-    "users"
-  );
+  const [activeTab, setActiveTab] = useState<"users" | "events" | "feedback" | "settings">("users");
   const [showCreateEvent, setShowCreateEvent] = useState(false);
+  const [editingEvent, setEditingEvent] = useState<Event | null>(null);
+  const [showUserEventModal, setShowUserEventModal] = useState<{ event: Event } | null>(null);
   const [newEvent, setNewEvent] = useState({
     name: "",
     description: "",
@@ -95,21 +112,27 @@ export default function AdminPage() {
 
   const fetchData = async () => {
     try {
-      const [usersRes, statsRes, eventsRes] = await Promise.all([
+      const [usersRes, statsRes, eventsRes, feedbacksRes, settingsRes] = await Promise.all([
         fetch("/api/admin/users"),
         fetch("/api/admin/stats"),
         fetch("/api/events"),
+        fetch("/api/feedback"),
+        fetch("/api/admin/settings"),
       ]);
 
-      const [usersData, statsData, eventsData] = await Promise.all([
+      const [usersData, statsData, eventsData, feedbacksData, settingsData] = await Promise.all([
         usersRes.json(),
         statsRes.json(),
         eventsRes.json(),
+        feedbacksRes.ok ? feedbacksRes.json() : [],
+        settingsRes.ok ? settingsRes.json() : { votingEnabled: false },
       ]);
 
       setUsers(usersData);
       setStats(statsData);
       setEvents(eventsData);
+      setFeedbacks(feedbacksData);
+      setSettings(settingsData);
     } catch (error) {
       console.error("Failed to fetch admin data:", error);
     } finally {
@@ -166,6 +189,39 @@ export default function AdminPage() {
     }
   };
 
+  const handleUpdateEvent = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingEvent) return;
+
+    setActionLoading(editingEvent.id);
+
+    try {
+      const res = await fetch(`/api/events/${editingEvent.id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: editingEvent.name,
+          description: editingEvent.description,
+          price: editingEvent.price,
+          isLocked: editingEvent.isLocked,
+          autoJoin: editingEvent.autoJoin,
+        }),
+      });
+
+      if (!res.ok) {
+        const data = await res.json();
+        throw new Error(data.error);
+      }
+
+      setEditingEvent(null);
+      fetchData();
+    } catch (error: any) {
+      alert(error.message);
+    } finally {
+      setActionLoading(null);
+    }
+  };
+
   const handleDeleteEvent = async (eventId: string) => {
     if (!confirm("Are you sure you want to delete this event?")) return;
 
@@ -189,14 +245,14 @@ export default function AdminPage() {
     }
   };
 
-  const handleToggleEventLock = async (eventId: string, currentLocked: boolean) => {
-    setActionLoading(eventId);
+  const handleJoinUserToEvent = async (eventId: string, userId: string, joining: boolean) => {
+    setActionLoading(`${eventId}-${userId}`);
 
     try {
-      const res = await fetch(`/api/events/${eventId}`, {
-        method: "PUT",
+      const res = await fetch(`/api/admin/events/${eventId}/users`, {
+        method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ isLocked: !currentLocked }),
+        body: JSON.stringify({ userId, joining }),
       });
 
       if (!res.ok) {
@@ -204,6 +260,75 @@ export default function AdminPage() {
         throw new Error(data.error);
       }
 
+      fetchData();
+    } catch (error: any) {
+      alert(error.message);
+    } finally {
+      setActionLoading(null);
+    }
+  };
+
+  const handleToggleVoting = async () => {
+    setActionLoading("voting");
+
+    try {
+      const res = await fetch("/api/admin/settings", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ votingEnabled: !settings?.votingEnabled }),
+      });
+
+      if (!res.ok) {
+        const data = await res.json();
+        throw new Error(data.error);
+      }
+
+      fetchData();
+    } catch (error: any) {
+      alert(error.message);
+    } finally {
+      setActionLoading(null);
+    }
+  };
+
+  const handleToggleIllusion = async () => {
+    setActionLoading("illusion");
+
+    try {
+      const res = await fetch("/api/admin/settings", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ illusionMode: !settings?.illusionMode }),
+      });
+
+      if (!res.ok) {
+        const data = await res.json();
+        throw new Error(data.error);
+      }
+
+      fetchData();
+    } catch (error: any) {
+      alert(error.message);
+    } finally {
+      setActionLoading(null);
+    }
+  };
+
+  const handleSyncPerformanceEvent = async () => {
+    setActionLoading("sync");
+
+    try {
+      const res = await fetch("/api/admin/sync-performance-event", {
+        method: "POST",
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        throw new Error(data.error);
+      }
+
+      alert(data.message);
       fetchData();
     } catch (error: any) {
       alert(error.message);
@@ -221,6 +346,15 @@ export default function AdminPage() {
       default:
         return "badge-not-activated";
     }
+  };
+
+  const formatDate = (dateString: string) => {
+    return new Date(dateString).toLocaleDateString("en-US", {
+      month: "short",
+      day: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+    });
   };
 
   if (status === "loading" || loading) {
@@ -277,10 +411,10 @@ export default function AdminPage() {
       )}
 
       {/* Tabs */}
-      <div className="flex gap-2 mb-6 border-b border-christmas-gold/30 pb-2">
+      <div className="flex gap-2 mb-6 border-b border-christmas-gold/30 pb-2 overflow-x-auto">
         <button
           onClick={() => setActiveTab("users")}
-          className={`px-4 py-2 rounded-t-lg transition ${
+          className={`px-4 py-2 rounded-t-lg transition whitespace-nowrap ${
             activeTab === "users"
               ? "bg-christmas-gold text-christmas-dark font-medium"
               : "text-christmas-cream/70 hover:text-christmas-gold"
@@ -290,13 +424,33 @@ export default function AdminPage() {
         </button>
         <button
           onClick={() => setActiveTab("events")}
-          className={`px-4 py-2 rounded-t-lg transition ${
+          className={`px-4 py-2 rounded-t-lg transition whitespace-nowrap ${
             activeTab === "events"
               ? "bg-christmas-gold text-christmas-dark font-medium"
               : "text-christmas-cream/70 hover:text-christmas-gold"
           }`}
         >
           🎉 Events
+        </button>
+        <button
+          onClick={() => setActiveTab("feedback")}
+          className={`px-4 py-2 rounded-t-lg transition whitespace-nowrap ${
+            activeTab === "feedback"
+              ? "bg-christmas-gold text-christmas-dark font-medium"
+              : "text-christmas-cream/70 hover:text-christmas-gold"
+          }`}
+        >
+          💬 Feedback ({feedbacks.length})
+        </button>
+        <button
+          onClick={() => setActiveTab("settings")}
+          className={`px-4 py-2 rounded-t-lg transition whitespace-nowrap ${
+            activeTab === "settings"
+              ? "bg-christmas-gold text-christmas-dark font-medium"
+              : "text-christmas-cream/70 hover:text-christmas-gold"
+          }`}
+        >
+          ⚙️ Settings
         </button>
       </div>
 
@@ -398,13 +552,23 @@ export default function AdminPage() {
               <div key={event.id} className="christmas-card p-4">
                 <div className="flex justify-between items-start mb-2">
                   <h3 className="font-bold text-christmas-gold">{event.name}</h3>
-                  <button
-                    onClick={() => handleDeleteEvent(event.id)}
-                    disabled={actionLoading === event.id}
-                    className="text-red-400 hover:text-red-300"
-                  >
-                    🗑️
-                  </button>
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => setEditingEvent(event)}
+                      className="text-christmas-gold hover:text-christmas-cream"
+                      title="Edit"
+                    >
+                      ✏️
+                    </button>
+                    <button
+                      onClick={() => handleDeleteEvent(event.id)}
+                      disabled={actionLoading === event.id}
+                      className="text-red-400 hover:text-red-300"
+                      title="Delete"
+                    >
+                      🗑️
+                    </button>
+                  </div>
                 </div>
                 {event.description && (
                   <p className="text-sm text-christmas-cream/70 mb-3">
@@ -414,19 +578,19 @@ export default function AdminPage() {
                 
                 {/* Event Settings */}
                 <div className="space-y-2 mb-3">
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm text-christmas-cream/70">Locked (users can&apos;t change)</span>
-                    <button
-                      onClick={() => handleToggleEventLock(event.id, event.isLocked)}
-                      disabled={actionLoading === event.id}
-                      className={`px-3 py-1 rounded text-xs font-medium transition ${
-                        event.isLocked
-                          ? "bg-christmas-gold text-christmas-dark"
-                          : "bg-christmas-dark border border-christmas-gold/30 text-christmas-cream/70"
-                      }`}
-                    >
-                      {event.isLocked ? "🔒 Locked" : "🔓 Unlocked"}
-                    </button>
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="text-christmas-cream/70">Price</span>
+                    <span className="text-christmas-gold font-medium">
+                      {event.price > 0 ? `${event.price} ₺` : "TBA"}
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="text-christmas-cream/70">Status</span>
+                    <span className={`text-xs font-medium px-2 py-0.5 rounded ${
+                      event.isLocked ? "bg-christmas-gold/20 text-christmas-gold" : "bg-green-900/30 text-green-400"
+                    }`}>
+                      {event.isLocked ? "🔒 Locked" : "🔓 Open"}
+                    </span>
                   </div>
                   {event.autoJoin && (
                     <div className="text-xs text-green-400">
@@ -435,134 +599,265 @@ export default function AdminPage() {
                   )}
                 </div>
 
-                <div className="flex items-center justify-between text-sm">
-                  <span className="text-christmas-cream/50">
-                    {event.registrations.filter(r => r.joining).length} joined
-                  </span>
-                  <span className="text-christmas-gold font-medium">
-                    {event.price > 0 ? `${event.price} ₺` : "TBA"}
-                  </span>
-                </div>
+                {/* Manage Users Button */}
+                <button
+                  onClick={() => setShowUserEventModal({ event })}
+                  className="w-full py-2 text-sm border border-christmas-gold/30 rounded-lg text-christmas-cream/70 hover:text-christmas-gold hover:border-christmas-gold/50 transition"
+                >
+                  👥 Manage Users ({event.registrations.filter(r => r.joining).length} joined)
+                </button>
               </div>
             ))}
           </div>
 
           {/* Create Event Modal */}
           {showCreateEvent && (
-            <div
-              className="modal-overlay"
-              onClick={() => setShowCreateEvent(false)}
-            >
-              <div
-                className="christmas-card w-full max-w-md p-6 m-4"
-                onClick={(e) => e.stopPropagation()}
-              >
-                <h2 className="text-2xl font-bold text-christmas-gold mb-6">
-                  ➕ Create Event
-                </h2>
-
+            <div className="modal-overlay" onClick={() => setShowCreateEvent(false)}>
+              <div className="christmas-card w-full max-w-md p-6 m-4" onClick={(e) => e.stopPropagation()}>
+                <h2 className="text-2xl font-bold text-christmas-gold mb-6">➕ Create Event</h2>
                 <form onSubmit={handleCreateEvent} className="space-y-4">
                   <div>
-                    <label className="block text-sm font-medium text-christmas-gold mb-2">
-                      Event Name *
-                    </label>
+                    <label className="block text-sm font-medium text-christmas-gold mb-2">Event Name *</label>
                     <input
                       type="text"
                       value={newEvent.name}
-                      onChange={(e) =>
-                        setNewEvent({ ...newEvent, name: e.target.value })
-                      }
-                      placeholder="e.g., Cocktail Hour"
+                      onChange={(e) => setNewEvent({ ...newEvent, name: e.target.value })}
                       className="input-christmas w-full"
                       required
                     />
                   </div>
-
                   <div>
-                    <label className="block text-sm font-medium text-christmas-gold mb-2">
-                      Description
-                    </label>
+                    <label className="block text-sm font-medium text-christmas-gold mb-2">Description</label>
                     <textarea
                       value={newEvent.description}
-                      onChange={(e) =>
-                        setNewEvent({ ...newEvent, description: e.target.value })
-                      }
-                      placeholder="Describe the event..."
+                      onChange={(e) => setNewEvent({ ...newEvent, description: e.target.value })}
                       className="input-christmas w-full h-24 resize-none"
                     />
                   </div>
-
                   <div>
-                    <label className="block text-sm font-medium text-christmas-gold mb-2">
-                      Price (₺)
-                    </label>
+                    <label className="block text-sm font-medium text-christmas-gold mb-2">Price (₺)</label>
                     <input
                       type="number"
                       value={newEvent.price}
-                      onChange={(e) =>
-                        setNewEvent({
-                          ...newEvent,
-                          price: parseFloat(e.target.value) || 0,
-                        })
-                      }
+                      onChange={(e) => setNewEvent({ ...newEvent, price: parseFloat(e.target.value) || 0 })}
                       min="0"
-                      step="0.01"
                       className="input-christmas w-full"
                     />
                   </div>
-
                   <div className="space-y-3">
                     <label className="flex items-center gap-3 cursor-pointer">
-                      <input
-                        type="checkbox"
-                        checked={newEvent.isLocked}
-                        onChange={(e) =>
-                          setNewEvent({ ...newEvent, isLocked: e.target.checked })
-                        }
-                        className="w-4 h-4"
-                      />
-                      <span className="text-sm text-christmas-cream">
-                        🔒 Lock event (users cannot change their choice)
-                      </span>
+                      <input type="checkbox" checked={newEvent.isLocked} onChange={(e) => setNewEvent({ ...newEvent, isLocked: e.target.checked })} className="w-4 h-4" />
+                      <span className="text-sm text-christmas-cream">🔒 Lock event</span>
                     </label>
-
                     <label className="flex items-center gap-3 cursor-pointer">
-                      <input
-                        type="checkbox"
-                        checked={newEvent.autoJoin}
-                        onChange={(e) =>
-                          setNewEvent({ ...newEvent, autoJoin: e.target.checked })
-                        }
-                        className="w-4 h-4"
-                      />
-                      <span className="text-sm text-christmas-cream">
-                        ✓ Auto-join new users to this event
-                      </span>
+                      <input type="checkbox" checked={newEvent.autoJoin} onChange={(e) => setNewEvent({ ...newEvent, autoJoin: e.target.checked })} className="w-4 h-4" />
+                      <span className="text-sm text-christmas-cream">✓ Auto-join new users</span>
                     </label>
                   </div>
-
                   <div className="flex gap-3 pt-4">
-                    <button
-                      type="button"
-                      onClick={() => setShowCreateEvent(false)}
-                      className="flex-1 py-2 border border-christmas-gold/50 rounded-lg text-christmas-cream hover:bg-christmas-gold/10"
-                    >
-                      Cancel
-                    </button>
-                    <button
-                      type="submit"
-                      disabled={actionLoading === "create-event"}
-                      className="btn-christmas flex-1"
-                    >
-                      {actionLoading === "create-event"
-                        ? "Creating..."
-                        : "Create"}
-                    </button>
+                    <button type="button" onClick={() => setShowCreateEvent(false)} className="flex-1 py-2 border border-christmas-gold/50 rounded-lg text-christmas-cream hover:bg-christmas-gold/10">Cancel</button>
+                    <button type="submit" disabled={actionLoading === "create-event"} className="btn-christmas flex-1">{actionLoading === "create-event" ? "Creating..." : "Create"}</button>
                   </div>
                 </form>
               </div>
             </div>
           )}
+
+          {/* Edit Event Modal */}
+          {editingEvent && (
+            <div className="modal-overlay" onClick={() => setEditingEvent(null)}>
+              <div className="christmas-card w-full max-w-md p-6 m-4" onClick={(e) => e.stopPropagation()}>
+                <h2 className="text-2xl font-bold text-christmas-gold mb-6">✏️ Edit Event</h2>
+                <form onSubmit={handleUpdateEvent} className="space-y-4">
+                  <div>
+                    <label className="block text-sm font-medium text-christmas-gold mb-2">Event Name *</label>
+                    <input
+                      type="text"
+                      value={editingEvent.name}
+                      onChange={(e) => setEditingEvent({ ...editingEvent, name: e.target.value })}
+                      className="input-christmas w-full"
+                      required
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-christmas-gold mb-2">Description</label>
+                    <textarea
+                      value={editingEvent.description || ""}
+                      onChange={(e) => setEditingEvent({ ...editingEvent, description: e.target.value })}
+                      className="input-christmas w-full h-24 resize-none"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-christmas-gold mb-2">Price (₺)</label>
+                    <input
+                      type="number"
+                      value={editingEvent.price}
+                      onChange={(e) => setEditingEvent({ ...editingEvent, price: parseFloat(e.target.value) || 0 })}
+                      min="0"
+                      className="input-christmas w-full"
+                    />
+                  </div>
+                  <div className="space-y-3">
+                    <label className="flex items-center gap-3 cursor-pointer">
+                      <input type="checkbox" checked={editingEvent.isLocked} onChange={(e) => setEditingEvent({ ...editingEvent, isLocked: e.target.checked })} className="w-4 h-4" />
+                      <span className="text-sm text-christmas-cream">🔒 Lock event</span>
+                    </label>
+                    <label className="flex items-center gap-3 cursor-pointer">
+                      <input type="checkbox" checked={editingEvent.autoJoin} onChange={(e) => setEditingEvent({ ...editingEvent, autoJoin: e.target.checked })} className="w-4 h-4" />
+                      <span className="text-sm text-christmas-cream">✓ Auto-join new users</span>
+                    </label>
+                  </div>
+                  <div className="flex gap-3 pt-4">
+                    <button type="button" onClick={() => setEditingEvent(null)} className="flex-1 py-2 border border-christmas-gold/50 rounded-lg text-christmas-cream hover:bg-christmas-gold/10">Cancel</button>
+                    <button type="submit" disabled={actionLoading === editingEvent.id} className="btn-christmas flex-1">{actionLoading === editingEvent.id ? "Saving..." : "Save"}</button>
+                  </div>
+                </form>
+              </div>
+            </div>
+          )}
+
+          {/* Manage Users Modal */}
+          {showUserEventModal && (
+            <div className="modal-overlay" onClick={() => setShowUserEventModal(null)}>
+              <div className="christmas-card w-full max-w-lg max-h-[80vh] flex flex-col m-4" onClick={(e) => e.stopPropagation()}>
+                <div className="p-4 border-b border-christmas-gold/30">
+                  <h2 className="text-xl font-bold text-christmas-gold">👥 Manage Users</h2>
+                  <p className="text-sm text-christmas-cream/70">{showUserEventModal.event.name}</p>
+                </div>
+                <div className="flex-1 overflow-y-auto p-4">
+                  <div className="space-y-2">
+                    {users.filter(u => !u.isAdmin).map((user) => {
+                      const isJoined = showUserEventModal.event.registrations.some(r => r.user.id === user.id && r.joining);
+                      return (
+                        <div key={user.id} className="flex items-center justify-between bg-christmas-dark/50 rounded-lg p-3">
+                          <span className="text-christmas-cream">{user.name}</span>
+                          <button
+                            onClick={() => handleJoinUserToEvent(showUserEventModal.event.id, user.id, !isJoined)}
+                            disabled={actionLoading === `${showUserEventModal.event.id}-${user.id}`}
+                            className={`px-3 py-1 rounded text-xs font-medium transition ${
+                              isJoined
+                                ? "bg-green-600 text-white hover:bg-green-700"
+                                : "bg-christmas-dark border border-christmas-gold/30 text-christmas-cream/70 hover:border-christmas-gold"
+                            }`}
+                          >
+                            {isJoined ? "✓ Joined" : "Add"}
+                          </button>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+                <div className="p-4 border-t border-christmas-gold/30">
+                  <button onClick={() => setShowUserEventModal(null)} className="w-full py-2 border border-christmas-gold/50 rounded-lg text-christmas-cream hover:bg-christmas-gold/10">Close</button>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Feedback Tab */}
+      {activeTab === "feedback" && (
+        <div className="christmas-card p-6">
+          <h2 className="text-xl font-bold text-christmas-gold mb-4">💬 User Feedback</h2>
+          {feedbacks.length === 0 ? (
+            <p className="text-christmas-cream/50 text-center py-8">No feedback submitted yet.</p>
+          ) : (
+            <div className="space-y-4">
+              {feedbacks.map((feedback) => (
+                <div key={feedback.id} className="bg-christmas-dark/50 rounded-lg p-4">
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="font-medium text-christmas-gold">{feedback.user.name}</span>
+                    <span className="text-xs text-christmas-cream/50">{formatDate(feedback.createdAt)}</span>
+                  </div>
+                  <p className="text-christmas-cream">{feedback.content}</p>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Settings Tab */}
+      {activeTab === "settings" && (
+        <div className="space-y-6">
+          {/* Voting Settings */}
+          <div className="christmas-card p-6">
+            <h2 className="text-xl font-bold text-christmas-gold mb-4">⭐ Voting Settings</h2>
+            <p className="text-christmas-cream/70 text-sm mb-4">
+              Enable voting during the party so users can rate performances.
+            </p>
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="font-medium text-christmas-cream">Performance Voting</p>
+                <p className="text-xs text-christmas-cream/50">
+                  {settings?.votingEnabled ? "Users can vote for performances" : "Voting is disabled"}
+                </p>
+              </div>
+              <button
+                onClick={handleToggleVoting}
+                disabled={actionLoading === "voting"}
+                className={`px-4 py-2 rounded-lg font-medium transition ${
+                  settings?.votingEnabled
+                    ? "bg-green-600 text-white hover:bg-green-700"
+                    : "bg-christmas-dark border border-christmas-gold/30 text-christmas-cream/70 hover:border-christmas-gold"
+                }`}
+              >
+                {actionLoading === "voting" ? "..." : settings?.votingEnabled ? "✓ Enabled" : "Enable"}
+              </button>
+            </div>
+          </div>
+
+          {/* Sync Performance Event */}
+          <div className="christmas-card p-6">
+            <h2 className="text-xl font-bold text-christmas-gold mb-4">🔄 Sync Performance Event</h2>
+            <p className="text-christmas-cream/70 text-sm mb-4">
+              Automatically add all users who have registered for any performance to the &quot;Performance&quot; event.
+              This ensures all performers are joined to the Performance event.
+            </p>
+            <button
+              onClick={handleSyncPerformanceEvent}
+              disabled={actionLoading === "sync"}
+              className="btn-christmas"
+            >
+              {actionLoading === "sync" ? "Syncing..." : "🔄 Sync Now"}
+            </button>
+          </div>
+
+          {/* Illusion Mode - Performance Feature */}
+          <div className="christmas-card p-6 border-2 border-purple-500/30">
+            <h2 className="text-xl font-bold text-purple-400 mb-4">♠️ Illusion Mode</h2>
+            <p className="text-christmas-cream/70 text-sm mb-4">
+              Trigger the dramatic reveal! When activated, all users will see a mysterious message 
+              that transitions into the Spade 3 card after 10 seconds.
+            </p>
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="font-medium text-christmas-cream">Activate Illusion</p>
+                <p className="text-xs text-christmas-cream/50">
+                  {settings?.illusionMode ? "The illusion is active for all users!" : "Click to start the magic"}
+                </p>
+              </div>
+              <button
+                onClick={handleToggleIllusion}
+                disabled={actionLoading === "illusion"}
+                className={`px-4 py-2 rounded-lg font-medium transition ${
+                  settings?.illusionMode
+                    ? "bg-purple-600 text-white hover:bg-purple-700 animate-pulse"
+                    : "bg-christmas-dark border border-purple-500/30 text-purple-400 hover:border-purple-500"
+                }`}
+              >
+                {actionLoading === "illusion" ? "..." : settings?.illusionMode ? "♠️ Active" : "♠️ Activate"}
+              </button>
+            </div>
+            {settings?.illusionMode && (
+              <div className="mt-4 p-3 bg-purple-900/20 rounded-lg border border-purple-500/20">
+                <p className="text-sm text-purple-300">
+                  ✨ The illusion is now showing for all users. Click the button again to deactivate.
+                </p>
+              </div>
+            )}
+          </div>
         </div>
       )}
     </div>

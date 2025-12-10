@@ -13,6 +13,7 @@ export default function Navbar() {
     { href: "/dashboard", label: "Dashboard" },
     { href: "/performances", label: "Performances" },
     { href: "/events", label: "Events" },
+    { href: "/tasks", label: "Contributions" },
     { href: "/ticket", label: "My Ticket" },
   ];
 

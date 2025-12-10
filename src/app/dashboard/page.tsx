@@ -6,6 +6,8 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import Countdown from "@/components/Countdown";
 import TicketStatus from "@/components/TicketStatus";
+import EventReminderModal from "@/components/EventReminderModal";
+import FeedbackForm from "@/components/FeedbackForm";
 
 interface Ticket {
   id: string;
@@ -32,6 +34,7 @@ export default function DashboardPage() {
   const router = useRouter();
   const [ticket, setTicket] = useState<Ticket | null>(null);
   const [loading, setLoading] = useState(true);
+  const [showReminderModal, setShowReminderModal] = useState(false);
 
   useEffect(() => {
     if (status === "unauthenticated") {
@@ -42,6 +45,7 @@ export default function DashboardPage() {
   useEffect(() => {
     if (session) {
       fetchTicket();
+      checkNotificationCount();
     }
   }, [session]);
 
@@ -54,6 +58,20 @@ export default function DashboardPage() {
       console.error("Failed to fetch ticket:", error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const checkNotificationCount = async () => {
+    try {
+      const res = await fetch("/api/user/notification");
+      const data = await res.json();
+      // Show modal only if user has seen it less than 2 times
+      if (data.notificationCount < 2) {
+        // Delay showing modal for better UX
+        setTimeout(() => setShowReminderModal(true), 1500);
+      }
+    } catch (error) {
+      console.error("Failed to check notification count:", error);
     }
   };
 
@@ -71,13 +89,18 @@ export default function DashboardPage() {
 
   return (
     <div className="max-w-6xl mx-auto p-4 sm:p-6 lg:p-8">
+      {/* Event Reminder Modal */}
+      {showReminderModal && (
+        <EventReminderModal onClose={() => setShowReminderModal(false)} />
+      )}
+
       {/* Welcome Section */}
       <div className="text-center mb-12">
         <h1 className="text-4xl sm:text-5xl font-bold text-christmas-gold mb-4">
           🎄 Welcome, {session.user.name}! 🎄
         </h1>
         <p className="text-xl text-christmas-cream/80">
-          Get ready for an unforgettable Christmas celebration!
+          Get ready for the KIKI Christmas Event!
         </p>
       </div>
 
@@ -160,11 +183,11 @@ export default function DashboardPage() {
       </div>
 
       {/* Quick Links */}
-      <div className="christmas-card p-6">
+      <div className="christmas-card p-6 mb-8">
         <h2 className="text-2xl font-bold text-christmas-gold mb-6 text-center">
           🌟 Quick Actions
         </h2>
-        <div className="grid sm:grid-cols-3 gap-4">
+        <div className="grid sm:grid-cols-4 gap-4">
           <Link
             href="/performances"
             className="christmas-card p-4 text-center hover:border-christmas-gold transition group"
@@ -174,7 +197,7 @@ export default function DashboardPage() {
             </span>
             <span className="text-christmas-gold font-medium">Performances</span>
             <p className="text-sm text-christmas-cream/60 mt-1">
-              Create or join a performance
+              Create or join
             </p>
           </Link>
 
@@ -187,7 +210,20 @@ export default function DashboardPage() {
             </span>
             <span className="text-christmas-gold font-medium">Events</span>
             <p className="text-sm text-christmas-cream/60 mt-1">
-              Cocktails, market & more
+              Choose events
+            </p>
+          </Link>
+
+          <Link
+            href="/tasks"
+            className="christmas-card p-4 text-center hover:border-christmas-gold transition group"
+          >
+            <span className="text-4xl block mb-2 group-hover:scale-110 transition">
+              📋
+            </span>
+            <span className="text-christmas-gold font-medium">Contributions</span>
+            <p className="text-sm text-christmas-cream/60 mt-1">
+              What can you bring?
             </p>
           </Link>
 
@@ -200,12 +236,14 @@ export default function DashboardPage() {
             </span>
             <span className="text-christmas-gold font-medium">My Ticket</span>
             <p className="text-sm text-christmas-cream/60 mt-1">
-              View your ticket details
+              View details
             </p>
           </Link>
         </div>
       </div>
+
+      {/* Feedback Form */}
+      <FeedbackForm />
     </div>
   );
 }
-
