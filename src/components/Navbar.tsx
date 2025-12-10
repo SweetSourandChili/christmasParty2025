@@ -5,22 +5,25 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useSession, signOut } from "next-auth/react";
 import { useLanguage } from "./LanguageProvider";
+import { TranslationKey } from "@/lib/translations";
+
+type NavLink = { href: string; labelKey: TranslationKey };
 
 export default function Navbar() {
   const pathname = usePathname();
   const { data: session } = useSession();
   const { language, setLanguage, t } = useLanguage();
 
-  const navLinks = [
-    { href: "/dashboard", labelKey: "dashboard" as const },
-    { href: "/performances", labelKey: "performances" as const },
-    { href: "/events", labelKey: "events" as const },
-    { href: "/tasks", labelKey: "contributions" as const },
-    { href: "/ticket", labelKey: "myTicket" as const },
+  const navLinks: NavLink[] = [
+    { href: "/dashboard", labelKey: "dashboard" },
+    { href: "/performances", labelKey: "performances" },
+    { href: "/events", labelKey: "events" },
+    { href: "/tasks", labelKey: "contributions" },
+    { href: "/ticket", labelKey: "myTicket" },
   ];
 
   if (session?.user?.isAdmin) {
-    navLinks.push({ href: "/admin", labelKey: "admin" as const });
+    navLinks.push({ href: "/admin", labelKey: "admin" });
   }
 
   return (
@@ -119,7 +122,7 @@ function MobileMenu({
 }: {
   session: any;
   pathname: string;
-  navLinks: { href: string; labelKey: string }[];
+  navLinks: NavLink[];
 }) {
   const [isOpen, setIsOpen] = useState(false);
   const { t } = useLanguage();
@@ -167,7 +170,7 @@ function MobileMenu({
                     pathname === link.href ? "active" : ""
                   }`}
                 >
-                  {t(link.labelKey as any)}
+                  {t(link.labelKey)}
                 </Link>
               ))}
               <button
