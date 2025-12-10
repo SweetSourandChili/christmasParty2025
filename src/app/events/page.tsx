@@ -3,6 +3,7 @@
 import { useSession } from "next-auth/react";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import { useLanguage } from "@/components/LanguageProvider";
 
 interface Event {
   id: string;
@@ -30,6 +31,7 @@ const eventIcons: Record<string, string> = {
 export default function EventsPage() {
   const { data: session, status } = useSession();
   const router = useRouter();
+  const { t } = useLanguage();
   const [events, setEvents] = useState<Event[]>([]);
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
@@ -109,10 +111,10 @@ export default function EventsPage() {
     <div className="max-w-6xl mx-auto p-4 sm:p-6 lg:p-8">
       <div className="mb-8">
         <h1 className="text-3xl font-bold text-christmas-gold">
-          🎉 Party Events
+          🎉 {t("eventsTitle")}
         </h1>
         <p className="text-christmas-cream/70 mt-1">
-          Select which events you&apos;d like to join
+          {t("eventsDesc")}
         </p>
       </div>
 
@@ -122,13 +124,13 @@ export default function EventsPage() {
           <span className="text-4xl">💰</span>
           <div>
             <h3 className="text-lg font-bold text-christmas-gold">
-              Estimated Total Cost
+              {t("estimatedTotalCost")}
             </h3>
             <p className="text-christmas-cream text-xl font-semibold">
-              Approximately <span className="text-christmas-gold">800 - 1,100 ₺</span>
+              {t("approximately")} <span className="text-christmas-gold">800 - 1,100 ₺</span>
             </p>
             <p className="text-christmas-cream/60 text-sm mt-1">
-              Final prices will be announced soon
+              {t("finalPricesAnnounced")}
             </p>
           </div>
         </div>
@@ -139,9 +141,7 @@ export default function EventsPage() {
         <span className="text-2xl">💡</span>
         <div className="text-sm text-christmas-cream/80">
           <p>
-            Let us know which events you&apos;re interested in attending. 
-            Some events are mandatory (🔒), while others are optional.
-            Prices will be finalized and announced soon.
+            {t("eventInfoDesc")}
           </p>
         </div>
       </div>
@@ -151,11 +151,10 @@ export default function EventsPage() {
         <div className="christmas-card p-12 text-center">
           <span className="text-6xl block mb-4">🎊</span>
           <h2 className="text-2xl font-bold text-christmas-gold mb-2">
-            Events Coming Soon!
+            {t("eventsComingSoon")}
           </h2>
           <p className="text-christmas-cream/70">
-            The admin is setting up exciting events for the party. Check back
-            later!
+            {t("eventsComingSoonDesc")}
           </p>
         </div>
       ) : (
@@ -173,7 +172,7 @@ export default function EventsPage() {
                     <span className="text-6xl">{getEventIcon(event.name)}</span>
                     {isLocked && (
                       <div className="absolute top-2 right-2 bg-christmas-gold/90 text-christmas-dark px-2 py-1 rounded text-xs font-bold flex items-center gap-1">
-                        🔒 Required
+                        🔒 {t("required")}
                       </div>
                     )}
                   </div>
@@ -184,7 +183,7 @@ export default function EventsPage() {
                         {event.name}
                       </h3>
                       <span className="bg-christmas-gold/20 text-christmas-gold px-2 py-1 rounded text-xs font-medium">
-                        TBA
+                        {t("tba")}
                       </span>
                     </div>
 
@@ -195,8 +194,7 @@ export default function EventsPage() {
                     )}
 
                     <div className="text-xs text-christmas-cream/50 mb-4">
-                      {joiningCount} {joiningCount === 1 ? "person" : "people"}{" "}
-                      joining
+                      {joiningCount} {joiningCount === 1 ? t("personJoining") : t("peopleJoining")}
                     </div>
 
                     {/* Action Buttons or Locked Status */}
@@ -204,11 +202,11 @@ export default function EventsPage() {
                       <div className="bg-christmas-gold/10 border border-christmas-gold/30 rounded-lg p-3 text-center">
                         {myRegistration?.joining || event.autoJoin ? (
                           <p className="text-green-400 font-medium flex items-center justify-center gap-2">
-                            <span>✓</span> You&apos;re registered
+                            <span>✓</span> {t("youAreRegistered")}
                           </p>
                         ) : (
                           <p className="text-christmas-cream/70 text-sm">
-                            Registration managed by admin
+                            {t("registrationManagedByAdmin")}
                           </p>
                         )}
                       </div>
@@ -223,7 +221,7 @@ export default function EventsPage() {
                               : "bg-christmas-green/30 text-christmas-cream hover:bg-christmas-green/50"
                           }`}
                         >
-                          {myRegistration?.joining ? "✓ Joining" : "Join"}
+                          {myRegistration?.joining ? `✓ ${t("joining")}` : t("join")}
                         </button>
                         <button
                           onClick={() => handleJoin(event.id, false)}
@@ -235,8 +233,8 @@ export default function EventsPage() {
                           }`}
                         >
                           {myRegistration && !myRegistration.joining
-                            ? "✓ Not Joining"
-                            : "Not Joining"}
+                            ? `✓ ${t("notJoining")}`
+                            : t("notJoining")}
                         </button>
                       </div>
                     )}
@@ -250,10 +248,10 @@ export default function EventsPage() {
           <div className="mt-8 christmas-card p-6 text-center border-dashed border-2 border-christmas-gold/30">
             <span className="text-4xl block mb-3">🎊</span>
             <h3 className="text-xl font-bold text-christmas-gold mb-2">
-              More Events Coming Soon!
+              {t("moreEventsSoon")}
             </h3>
             <p className="text-christmas-cream/60 text-sm">
-              We&apos;re preparing more exciting activities for the party. Stay tuned!
+              {t("moreEventsSoonDesc")}
             </p>
           </div>
         </>

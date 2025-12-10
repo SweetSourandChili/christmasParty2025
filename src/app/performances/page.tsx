@@ -4,6 +4,7 @@ import { useSession } from "next-auth/react";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import PerformanceCommentsModal from "@/components/PerformanceCommentsModal";
+import { useLanguage } from "@/components/LanguageProvider";
 
 interface Performance {
   id: string;
@@ -41,6 +42,7 @@ interface PerformanceWithVotes {
 export default function PerformancesPage() {
   const { data: session, status } = useSession();
   const router = useRouter();
+  const { t } = useLanguage();
   const [performances, setPerformances] = useState<Performance[]>([]);
   const [performancesWithVotes, setPerformancesWithVotes] = useState<PerformanceWithVotes[]>([]);
   const [loading, setLoading] = useState(true);
@@ -185,7 +187,7 @@ export default function PerformancesPage() {
   };
 
   const handleDelete = async (performanceId: string) => {
-    if (!confirm("Are you sure you want to delete this performance?")) return;
+    if (!confirm(t("delete") + "?")) return;
 
     setActionLoading(performanceId);
 
@@ -287,17 +289,17 @@ export default function PerformancesPage() {
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
         <div>
           <h1 className="text-3xl font-bold text-christmas-gold">
-            🎭 Performance Stage
+            🎭 {t("performanceStage")}
           </h1>
           <p className="text-christmas-cream/70 mt-1">
-            Create or join a performance group (1-3 people)
+            {t("performanceDesc")}
           </p>
         </div>
         <button
           onClick={() => setShowCreateModal(true)}
           className="btn-christmas"
         >
-          ✨ Create Performance
+          {t("createPerformance")}
         </button>
       </div>
 
@@ -311,7 +313,7 @@ export default function PerformancesPage() {
               : "text-christmas-cream/70 hover:text-christmas-gold"
           }`}
         >
-          🎭 Performances
+          🎭 {t("performancesTab")}
         </button>
         <button
           onClick={() => setActiveTab("voting")}
@@ -321,7 +323,7 @@ export default function PerformancesPage() {
               : "text-christmas-cream/70 hover:text-christmas-gold"
           }`}
         >
-          ⭐ Vote & Rankings
+          ⭐ {t("voteRankings")}
         </button>
       </div>
 
@@ -332,8 +334,8 @@ export default function PerformancesPage() {
           <div className="christmas-card p-4 mb-8 flex items-start gap-3">
             <span className="text-2xl">🎁</span>
             <div className="text-sm text-christmas-cream/80">
-              <p className="font-medium text-christmas-gold mb-1">Every performer gets a special gift!</p>
-              <p>Create a performance or join an existing one. Each performance can have 1-3 participants.</p>
+              <p className="font-medium text-christmas-gold mb-1">{t("performerGift")}</p>
+              <p>{t("performerGiftDesc")}</p>
             </div>
           </div>
 
@@ -342,16 +344,16 @@ export default function PerformancesPage() {
             <div className="christmas-card p-12 text-center">
               <span className="text-6xl block mb-4">🎪</span>
               <h2 className="text-2xl font-bold text-christmas-gold mb-2">
-                No Performances Yet
+                {t("noPerformancesYet")}
               </h2>
               <p className="text-christmas-cream/70 mb-6">
-                Be the first to create a performance!
+                {t("beFirstPerformance")}
               </p>
               <button
                 onClick={() => setShowCreateModal(true)}
                 className="btn-christmas"
               >
-                Create First Performance
+                {t("createFirstPerformance")}
               </button>
             </div>
           ) : (
@@ -374,7 +376,7 @@ export default function PerformancesPage() {
                   )}
 
                   <div className="mb-4">
-                    <p className="text-xs text-christmas-gold mb-2">Participants:</p>
+                    <p className="text-xs text-christmas-gold mb-2">{t("participants")}:</p>
                     <div className="flex flex-wrap gap-2">
                       {performance.registrations.map((reg) => (
                         <span
@@ -394,13 +396,13 @@ export default function PerformancesPage() {
                       onClick={() => setCommentsModal({ id: performance.id, name: performance.name })}
                       className="flex-1 py-2 text-sm text-christmas-cream/70 hover:text-christmas-gold border border-christmas-gold/30 rounded-lg hover:border-christmas-gold/50 transition flex items-center justify-center gap-2"
                     >
-                      💬 Comments
+                      💬 {t("comments")}
                     </button>
                     {isRegistered(performance) && (
                       <button
                         onClick={() => setEditingPerformance(performance)}
                         className="py-2 px-3 text-sm text-christmas-cream/70 hover:text-christmas-gold border border-christmas-gold/30 rounded-lg hover:border-christmas-gold/50 transition"
-                        title="Edit Performance"
+                        title={t("edit")}
                       >
                         ✏️
                       </button>
@@ -411,7 +413,7 @@ export default function PerformancesPage() {
                     {isRegistered(performance) ? (
                       <>
                         <span className="flex-1 text-center py-2 text-green-400 text-sm">
-                          ✓ Registered
+                          {t("registered")}
                         </span>
                         {!isCreator(performance) && (
                           <button
@@ -419,7 +421,7 @@ export default function PerformancesPage() {
                             disabled={actionLoading === performance.id}
                             className="btn-christmas text-xs px-3 py-2"
                           >
-                            {actionLoading === performance.id ? "..." : "Leave"}
+                            {actionLoading === performance.id ? "..." : t("leave")}
                           </button>
                         )}
                       </>
@@ -437,8 +439,8 @@ export default function PerformancesPage() {
                           ? "..."
                           : performance.registrations.length >=
                             performance.maxParticipants
-                          ? "Full"
-                          : "Join Performance"}
+                          ? t("full")
+                          : t("joinPerformance")}
                       </button>
                     )}
 
@@ -447,7 +449,7 @@ export default function PerformancesPage() {
                         onClick={() => handleDelete(performance.id)}
                         disabled={actionLoading === performance.id}
                         className="text-red-400 hover:text-red-300 px-2"
-                        title="Delete"
+                        title={t("delete")}
                       >
                         🗑️
                       </button>
@@ -467,10 +469,10 @@ export default function PerformancesPage() {
             <div className="christmas-card p-12 text-center">
               <span className="text-6xl block mb-4">🔒</span>
               <h2 className="text-2xl font-bold text-christmas-gold mb-2">
-                Voting Not Open Yet
+                {t("votingNotOpen")}
               </h2>
               <p className="text-christmas-cream/70">
-                Voting will be enabled during the party. Check back soon!
+                {t("votingNotOpenDesc")}
               </p>
             </div>
           ) : votingLoading ? (
@@ -483,10 +485,10 @@ export default function PerformancesPage() {
               <div className="christmas-card p-4 mb-8 flex items-start gap-3">
                 <span className="text-2xl">⭐</span>
                 <div className="text-sm text-christmas-cream/80">
-                  <p className="font-medium text-christmas-gold mb-1">Rate the performances!</p>
-                  <p>Give 1-10 points to each performance. You cannot vote for your own performance.</p>
+                  <p className="font-medium text-christmas-gold mb-1">{t("ratePerformances")}</p>
+                  <p>{t("ratePerformancesDesc")}</p>
                   {session.user.isAdmin && !votingEnabled && (
-                    <p className="text-yellow-400 mt-2">⚠️ Admin preview: Voting is not enabled for users yet.</p>
+                    <p className="text-yellow-400 mt-2">{t("adminPreview")}</p>
                   )}
                 </div>
               </div>
@@ -528,11 +530,11 @@ export default function PerformancesPage() {
                           {perf.totalPoints}
                         </div>
                         <div className="text-xs text-christmas-cream/50">
-                          {perf.voteCount} {perf.voteCount === 1 ? "vote" : "votes"}
+                          {perf.voteCount} {perf.voteCount === 1 ? t("vote") : t("votes")}
                         </div>
                         {perf.voteCount > 0 && (
                           <div className="text-xs text-christmas-cream/50">
-                            avg: {perf.averagePoints}
+                            {t("avg")}: {perf.averagePoints}
                           </div>
                         )}
 
@@ -545,23 +547,23 @@ export default function PerformancesPage() {
                               disabled={actionLoading === `vote-${perf.id}`}
                               className="input-christmas text-sm py-1 px-2"
                             >
-                              <option value="">Vote...</option>
+                              <option value="">{t("voteAction")}</option>
                               {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((n) => (
                                 <option key={n} value={n}>
-                                  {n} {n === 1 ? "point" : "points"}
+                                  {n} {n === 1 ? t("point") : t("points")}
                                 </option>
                               ))}
                             </select>
                             {perf.userVote && (
                               <div className="text-xs text-green-400 mt-1">
-                                Your vote: {perf.userVote}
+                                {t("yourVote")}: {perf.userVote}
                               </div>
                             )}
                           </div>
                         )}
                         {perf.isParticipant && (
                           <div className="text-xs text-christmas-cream/40 mt-3">
-                            Your performance
+                            {t("yourPerformance")}
                           </div>
                         )}
                       </div>
@@ -573,10 +575,10 @@ export default function PerformancesPage() {
                   <div className="christmas-card p-12 text-center">
                     <span className="text-6xl block mb-4">🎭</span>
                     <h2 className="text-2xl font-bold text-christmas-gold mb-2">
-                      No Performances Yet
+                      {t("noPerformancesYet")}
                     </h2>
                     <p className="text-christmas-cream/70">
-                      Performances will appear here once created.
+                      {t("beFirstPerformance")}
                     </p>
                   </div>
                 )}
@@ -594,13 +596,13 @@ export default function PerformancesPage() {
             onClick={(e) => e.stopPropagation()}
           >
             <h2 className="text-2xl font-bold text-christmas-gold mb-6">
-              ✨ Create Performance
+              ✨ {t("createPerformanceTitle")}
             </h2>
 
             <form onSubmit={handleCreatePerformance} className="space-y-4">
               <div>
                 <label className="block text-sm font-medium text-christmas-gold mb-2">
-                  Performance Name *
+                  {t("performanceName")} *
                 </label>
                 <input
                   type="text"
@@ -608,7 +610,7 @@ export default function PerformancesPage() {
                   onChange={(e) =>
                     setNewPerformance({ ...newPerformance, name: e.target.value })
                   }
-                  placeholder="e.g., Christmas Carol Singers"
+                  placeholder={t("performanceNamePlaceholder")}
                   className="input-christmas w-full"
                   required
                 />
@@ -616,7 +618,7 @@ export default function PerformancesPage() {
 
               <div>
                 <label className="block text-sm font-medium text-christmas-gold mb-2">
-                  Description
+                  {t("description")}
                 </label>
                 <textarea
                   value={newPerformance.description}
@@ -626,14 +628,14 @@ export default function PerformancesPage() {
                       description: e.target.value,
                     })
                   }
-                  placeholder="Tell us about your performance..."
+                  placeholder={t("descriptionPlaceholder")}
                   className="input-christmas w-full h-24 resize-none"
                 />
               </div>
 
               <div>
                 <label className="block text-sm font-medium text-christmas-gold mb-2">
-                  Max Participants (1-3)
+                  {t("maxParticipants")}
                 </label>
                 <select
                   value={newPerformance.maxParticipants}
@@ -645,9 +647,9 @@ export default function PerformancesPage() {
                   }
                   className="input-christmas w-full"
                 >
-                  <option value={1}>1 (Solo)</option>
-                  <option value={2}>2 (Duo)</option>
-                  <option value={3}>3 (Trio)</option>
+                  <option value={1}>1 ({t("solo")})</option>
+                  <option value={2}>2 ({t("duo")})</option>
+                  <option value={3}>3 ({t("trio")})</option>
                 </select>
               </div>
 
@@ -657,14 +659,14 @@ export default function PerformancesPage() {
                   onClick={() => setShowCreateModal(false)}
                   className="flex-1 py-2 border border-christmas-gold/50 rounded-lg text-christmas-cream hover:bg-christmas-gold/10"
                 >
-                  Cancel
+                  {t("cancel")}
                 </button>
                 <button
                   type="submit"
                   disabled={creating}
                   className="btn-christmas flex-1"
                 >
-                  {creating ? "Creating..." : "Create"}
+                  {creating ? t("creating") : t("create")}
                 </button>
               </div>
             </form>
@@ -680,13 +682,13 @@ export default function PerformancesPage() {
             onClick={(e) => e.stopPropagation()}
           >
             <h2 className="text-2xl font-bold text-christmas-gold mb-6">
-              ✏️ Edit Performance
+              ✏️ {t("editPerformanceTitle")}
             </h2>
 
             <form onSubmit={handleEditPerformance} className="space-y-4">
               <div>
                 <label className="block text-sm font-medium text-christmas-gold mb-2">
-                  Performance Name *
+                  {t("performanceName")} *
                 </label>
                 <input
                   type="text"
@@ -694,7 +696,7 @@ export default function PerformancesPage() {
                   onChange={(e) =>
                     setEditingPerformance({ ...editingPerformance, name: e.target.value })
                   }
-                  placeholder="e.g., Christmas Carol Singers"
+                  placeholder={t("performanceNamePlaceholder")}
                   className="input-christmas w-full"
                   required
                 />
@@ -702,7 +704,7 @@ export default function PerformancesPage() {
 
               <div>
                 <label className="block text-sm font-medium text-christmas-gold mb-2">
-                  Description
+                  {t("description")}
                 </label>
                 <textarea
                   value={editingPerformance.description || ""}
@@ -712,7 +714,7 @@ export default function PerformancesPage() {
                       description: e.target.value,
                     })
                   }
-                  placeholder="Tell us about your performance..."
+                  placeholder={t("descriptionPlaceholder")}
                   className="input-christmas w-full h-24 resize-none"
                 />
               </div>
@@ -723,14 +725,14 @@ export default function PerformancesPage() {
                   onClick={() => setEditingPerformance(null)}
                   className="flex-1 py-2 border border-christmas-gold/50 rounded-lg text-christmas-cream hover:bg-christmas-gold/10"
                 >
-                  Cancel
+                  {t("cancel")}
                 </button>
                 <button
                   type="submit"
                   disabled={actionLoading === `edit-${editingPerformance.id}`}
                   className="btn-christmas flex-1"
                 >
-                  {actionLoading === `edit-${editingPerformance.id}` ? "Saving..." : "Save Changes"}
+                  {actionLoading === `edit-${editingPerformance.id}` ? t("saving") : t("saveChanges")}
                 </button>
               </div>
             </form>

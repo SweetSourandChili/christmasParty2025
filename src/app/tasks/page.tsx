@@ -3,6 +3,7 @@
 import { useSession } from "next-auth/react";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import { useLanguage } from "@/components/LanguageProvider";
 
 interface Task {
   id: string;
@@ -18,6 +19,7 @@ interface Task {
 export default function TasksPage() {
   const { data: session, status } = useSession();
   const router = useRouter();
+  const { t } = useLanguage();
   const [tasks, setTasks] = useState<Task[]>([]);
   const [loading, setLoading] = useState(true);
   const [newTask, setNewTask] = useState({ description: "", type: "bring" });
@@ -107,17 +109,17 @@ export default function TasksPage() {
     <div className="max-w-4xl mx-auto p-4 sm:p-6 lg:p-8">
       <div className="mb-8">
         <h1 className="text-3xl font-bold text-christmas-gold">
-          📋 Party Contributions
+          📋 {t("contributionsTitle")}
         </h1>
         <p className="text-christmas-cream/70 mt-1">
-          Let everyone know what you can bring or help with!
+          {t("contributionsDesc")}
         </p>
       </div>
 
       {/* Add New Task */}
       <div className="christmas-card p-6 mb-8">
         <h2 className="text-xl font-bold text-christmas-gold mb-4">
-          ➕ Add Your Contribution
+          ➕ {t("addYourContribution")}
         </h2>
 
         {error && (
@@ -129,13 +131,13 @@ export default function TasksPage() {
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <label className="block text-sm font-medium text-christmas-gold mb-2">
-              What can you contribute?
+              {t("whatCanContribute")}
             </label>
             <input
               type="text"
               value={newTask.description}
               onChange={(e) => setNewTask({ ...newTask, description: e.target.value })}
-              placeholder="e.g., Homemade cookies, DJ equipment, help with decorations..."
+              placeholder={t("contributionPlaceholder")}
               className="input-christmas w-full"
               maxLength={200}
               required
@@ -144,7 +146,7 @@ export default function TasksPage() {
 
           <div>
             <label className="block text-sm font-medium text-christmas-gold mb-2">
-              Type of contribution
+              {t("typeOfContribution")}
             </label>
             <div className="flex gap-4">
               <label className="flex items-center gap-2 cursor-pointer">
@@ -156,7 +158,7 @@ export default function TasksPage() {
                   onChange={(e) => setNewTask({ ...newTask, type: e.target.value as "bring" | "handle" })}
                   className="w-4 h-4"
                 />
-                <span className="text-christmas-cream">🎁 I can bring something</span>
+                <span className="text-christmas-cream">{t("iCanBringSomething")}</span>
               </label>
               <label className="flex items-center gap-2 cursor-pointer">
                 <input
@@ -167,7 +169,7 @@ export default function TasksPage() {
                   onChange={(e) => setNewTask({ ...newTask, type: e.target.value as "bring" | "handle" })}
                   className="w-4 h-4"
                 />
-                <span className="text-christmas-cream">🛠️ I can help with something</span>
+                <span className="text-christmas-cream">{t("iCanHelpWith")}</span>
               </label>
             </div>
           </div>
@@ -177,7 +179,7 @@ export default function TasksPage() {
             disabled={submitting || !newTask.description.trim()}
             className="btn-christmas"
           >
-            {submitting ? "Adding..." : "Add Contribution"}
+            {submitting ? t("adding") : t("addContribution")}
           </button>
         </form>
       </div>
@@ -187,11 +189,11 @@ export default function TasksPage() {
         {/* Things to Bring */}
         <div className="christmas-card p-6">
           <h3 className="text-xl font-bold text-christmas-gold mb-4 flex items-center gap-2">
-            🎁 Things People Will Bring
+            🎁 {t("thingsToWillBring")}
           </h3>
           {bringTasks.length === 0 ? (
             <p className="text-christmas-cream/50 text-sm">
-              No items yet. Be the first to contribute!
+              {t("noItemsYet")}
             </p>
           ) : (
             <ul className="space-y-3">
@@ -203,7 +205,7 @@ export default function TasksPage() {
                   <div>
                     <p className="text-christmas-cream">{task.description}</p>
                     <p className="text-xs text-christmas-cream/50 mt-1">
-                      by {task.user.name}
+                      {t("by")} {task.user.name}
                     </p>
                   </div>
                   {(task.user.id === session.user.id || session.user.isAdmin) && (
@@ -223,11 +225,11 @@ export default function TasksPage() {
         {/* Things to Handle */}
         <div className="christmas-card p-6">
           <h3 className="text-xl font-bold text-christmas-gold mb-4 flex items-center gap-2">
-            🛠️ Tasks People Will Handle
+            🛠️ {t("tasksToHandle")}
           </h3>
           {handleTasks.length === 0 ? (
             <p className="text-christmas-cream/50 text-sm">
-              No tasks yet. Volunteer to help!
+              {t("noTasksYet")}
             </p>
           ) : (
             <ul className="space-y-3">
@@ -239,7 +241,7 @@ export default function TasksPage() {
                   <div>
                     <p className="text-christmas-cream">{task.description}</p>
                     <p className="text-xs text-christmas-cream/50 mt-1">
-                      by {task.user.name}
+                      {t("by")} {task.user.name}
                     </p>
                   </div>
                   {(task.user.id === session.user.id || session.user.isAdmin) && (
@@ -259,4 +261,3 @@ export default function TasksPage() {
     </div>
   );
 }
-
