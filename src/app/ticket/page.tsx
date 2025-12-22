@@ -78,6 +78,11 @@ export default function TicketPage() {
   const joiningEvents =
     ticket.user?.eventRegistrations?.filter((reg) => reg.joining) || [];
 
+  // Calculate total price for joined events
+  const totalPrice = joiningEvents.reduce((total, reg) => {
+    return total + (reg.event.price > 0 ? reg.event.price : 0);
+  }, 0);
+
   return (
     <div className="max-w-2xl mx-auto p-4 sm:p-6 lg:p-8">
       <h1 className="text-3xl font-bold text-christmas-gold text-center mb-8">
@@ -162,8 +167,8 @@ export default function TicketPage() {
                         {reg.event.name}
                       </span>
                     </span>
-                    <span className="text-christmas-cream/50 text-sm">
-                      {t("tba")}
+                    <span className={`text-sm ${reg.event.price > 0 ? 'text-christmas-gold font-medium' : 'text-christmas-cream/50'}`}>
+                      {reg.event.price > 0 ? `${reg.event.price.toLocaleString()} ₺` : t("tba")}
                     </span>
                   </li>
                 ))}
@@ -188,7 +193,7 @@ export default function TicketPage() {
                 {t("estimatedTotal")}
               </span>
               <span className="text-christmas-gold font-bold text-lg">
-                800 - 1,100 ₺
+                {totalPrice > 0 ? `${totalPrice.toLocaleString()} ₺` : t("tba")}
               </span>
             </div>
             <p className="text-christmas-cream/50 text-xs mt-2">
@@ -218,7 +223,9 @@ export default function TicketPage() {
           </p>
           <div className="bg-christmas-dark/50 rounded-lg p-4">
             <p className="text-christmas-gold font-medium mb-1">{t("estimatedAmount")}</p>
-            <p className="text-2xl font-bold text-christmas-cream">800 - 1,100 ₺</p>
+            <p className="text-2xl font-bold text-christmas-cream">
+              {totalPrice > 0 ? `${totalPrice.toLocaleString()} ₺` : t("tba")}
+            </p>
           </div>
           <p className="text-sm text-christmas-cream/60 mt-4">
             {t("paymentConfirmNote")}

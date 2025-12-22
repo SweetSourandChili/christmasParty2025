@@ -95,6 +95,20 @@ export default function EventsPage() {
     return eventIcons[eventName] || "🎉";
   };
 
+  // Calculate total price for events user is joining
+  const calculateTotal = () => {
+    return events.reduce((total, event) => {
+      const myRegistration = getMyRegistration(event);
+      const isJoining = myRegistration?.joining || event.autoJoin;
+      if (isJoining && event.price > 0) {
+        return total + event.price;
+      }
+      return total;
+    }, 0);
+  };
+
+  const totalPrice = calculateTotal();
+
   if (status === "loading" || loading) {
     return (
       <div className="flex items-center justify-center min-h-[calc(100vh-4rem)]">
@@ -127,7 +141,11 @@ export default function EventsPage() {
               {t("estimatedTotalCost")}
             </h3>
             <p className="text-christmas-cream text-xl font-semibold">
-              {t("approximately")} <span className="text-christmas-gold">800 - 1,100 ₺</span>
+              {totalPrice > 0 ? (
+                <span className="text-christmas-gold">{totalPrice.toLocaleString()} ₺</span>
+              ) : (
+                <span className="text-christmas-cream/60">{t("tba")}</span>
+              )}
             </p>
             <p className="text-christmas-cream/60 text-sm mt-1">
               {t("finalPricesAnnounced")}
@@ -183,7 +201,7 @@ export default function EventsPage() {
                         {event.name}
                       </h3>
                       <span className="bg-christmas-gold/20 text-christmas-gold px-2 py-1 rounded text-xs font-medium">
-                        {t("tba")}
+                        {event.price > 0 ? `${event.price.toLocaleString()} ₺` : t("tba")}
                       </span>
                     </div>
 
