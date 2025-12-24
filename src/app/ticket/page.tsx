@@ -39,6 +39,7 @@ export default function TicketPage() {
   const { t, language } = useLanguage();
   const [ticket, setTicket] = useState<Ticket | null>(null);
   const [loading, setLoading] = useState(true);
+  const [showQRModal, setShowQRModal] = useState(false);
 
   useEffect(() => {
     if (status === "unauthenticated") {
@@ -207,7 +208,10 @@ export default function TicketPage() {
             <p className="text-sm text-christmas-gold mb-4 font-medium">
               {language === "tr" ? "Giriş için QR Kodunuz" : "Your Entry QR Code"}
             </p>
-            <div className="inline-block bg-white p-4 rounded-lg shadow-lg">
+            <button 
+              onClick={() => setShowQRModal(true)}
+              className="inline-block bg-white p-4 rounded-lg shadow-lg hover:shadow-xl transition-all hover:scale-105 cursor-pointer"
+            >
               <QRCodeSVG 
                 value={ticket.id} 
                 size={180}
@@ -216,8 +220,11 @@ export default function TicketPage() {
                 bgColor="#ffffff"
                 fgColor="#1a1a2e"
               />
-            </div>
-            <p className="text-xs text-christmas-cream/50 mt-4">{t("ticketId")}</p>
+            </button>
+            <p className="text-christmas-gold text-sm mt-4 font-medium">
+              👆 {language === "tr" ? "Büyütmek için tıkla" : "Tap to enlarge"}
+            </p>
+            <p className="text-xs text-christmas-cream/50 mt-3">{t("ticketId")}</p>
             <p className="font-mono text-christmas-gold text-xs mt-1">{ticket.id}</p>
             <p className="text-christmas-cream/40 text-xs mt-3">
               {language === "tr" 
@@ -230,6 +237,47 @@ export default function TicketPage() {
         {/* Decorative Footer */}
         <div className="bg-christmas-gold h-3" />
       </div>
+
+      {/* QR Code Modal */}
+      {showQRModal && (
+        <div 
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/90"
+          onClick={() => setShowQRModal(false)}
+        >
+          <div 
+            className="bg-white p-6 rounded-2xl shadow-2xl max-w-sm w-full"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="text-center">
+              <h3 className="text-lg font-bold text-gray-800 mb-4">
+                {language === "tr" ? "🎫 Giriş QR Kodu" : "🎫 Entry QR Code"}
+              </h3>
+              <div className="flex justify-center">
+                <QRCodeSVG 
+                  value={ticket.id} 
+                  size={280}
+                  level="H"
+                  includeMargin={true}
+                  bgColor="#ffffff"
+                  fgColor="#1a1a2e"
+                />
+              </div>
+              <p className="text-gray-600 font-medium mt-4">
+                {ticket.user?.name || session.user.name}
+              </p>
+              <p className="text-gray-400 text-sm mt-1 font-mono">
+                {ticket.id}
+              </p>
+              <button
+                onClick={() => setShowQRModal(false)}
+                className="mt-6 w-full py-3 bg-christmas-green text-white font-bold rounded-lg hover:bg-green-700 transition"
+              >
+                {language === "tr" ? "Kapat" : "Close"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Payment Info */}
       {ticket.status === "PAYMENT_PENDING" && (
