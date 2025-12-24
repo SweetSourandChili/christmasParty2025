@@ -22,10 +22,6 @@ export default function Navbar() {
     { href: "/ticket", labelKey: "myTicket" },
   ];
 
-  if (session?.user?.isBodyguard || session?.user?.isAdmin) {
-    navLinks.push({ href: "/scanner", labelKey: "scanner" });
-  }
-
   if (session?.user?.isAdmin) {
     navLinks.push({ href: "/admin", labelKey: "admin" });
   }
