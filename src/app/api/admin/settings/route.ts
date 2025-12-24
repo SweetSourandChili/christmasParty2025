@@ -37,6 +37,17 @@ export async function PUT(request: NextRequest) {
     }
 
     const body = await request.json();
+
+    // Handle reset notifications request
+    if (body.resetNotifications === true) {
+      await prisma.user.updateMany({
+        data: {
+          notificationCount: 0,
+        },
+      });
+      return NextResponse.json({ success: true, message: "All notifications reset" });
+    }
+
     const updateData: { votingEnabled?: boolean; illusionMode?: boolean } = {};
     
     if (typeof body.votingEnabled === "boolean") {

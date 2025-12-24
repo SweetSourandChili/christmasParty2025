@@ -337,6 +337,56 @@ export default function AdminPage() {
     }
   };
 
+  const handleDeleteUser = async (userId: string, userName: string) => {
+    if (!confirm(`Are you sure you want to delete ${userName}? This action cannot be undone.`)) return;
+
+    setActionLoading(`delete-${userId}`);
+
+    try {
+      const res = await fetch(`/api/admin/users?userId=${userId}`, {
+        method: "DELETE",
+      });
+
+      if (!res.ok) {
+        const data = await res.json();
+        throw new Error(data.error);
+      }
+
+      alert("User deleted successfully");
+      fetchData();
+    } catch (error: any) {
+      alert(error.message);
+    } finally {
+      setActionLoading(null);
+    }
+  };
+
+  const handleResetNotifications = async () => {
+    if (!confirm("Are you sure you want to reset all users' event notifications? They will see the reminder again.")) return;
+
+    setActionLoading("reset-notifications");
+
+    try {
+      const res = await fetch("/api/admin/settings", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ resetNotifications: true }),
+      });
+
+      if (!res.ok) {
+        const data = await res.json();
+        throw new Error(data.error);
+      }
+
+      alert("All user notifications have been reset!");
+      fetchData();
+    } catch (error: any) {
+      alert(error.message);
+    } finally {
+      setActionLoading(null);
+    }
+  };
+
   const getStatusBadgeClass = (status: string) => {
     switch (status) {
       case "ACTIVATED":
@@ -512,20 +562,32 @@ export default function AdminPage() {
                       )}
                     </td>
                     <td>
-                      {user.ticket && !user.isAdmin && (
-                        <select
-                          value={user.ticket.status}
-                          onChange={(e) =>
-                            handleUpdateTicketStatus(user.id, e.target.value)
-                          }
-                          disabled={actionLoading === user.id}
-                          className="input-christmas text-sm py-1 px-2"
-                        >
-                          <option value="NOT_ACTIVATED">Not Activated</option>
-                          <option value="PAYMENT_PENDING">Payment Pending</option>
-                          <option value="ACTIVATED">Activated ✓</option>
-                        </select>
-                      )}
+                      <div className="flex items-center gap-2">
+                        {user.ticket && !user.isAdmin && (
+                          <select
+                            value={user.ticket.status}
+                            onChange={(e) =>
+                              handleUpdateTicketStatus(user.id, e.target.value)
+                            }
+                            disabled={actionLoading === user.id}
+                            className="input-christmas text-sm py-1 px-2"
+                          >
+                            <option value="NOT_ACTIVATED">Not Activated</option>
+                            <option value="PAYMENT_PENDING">Payment Pending</option>
+                            <option value="ACTIVATED">Activated ✓</option>
+                          </select>
+                        )}
+                        {!user.isAdmin && (
+                          <button
+                            onClick={() => handleDeleteUser(user.id, user.name)}
+                            disabled={actionLoading === `delete-${user.id}`}
+                            className="text-red-400 hover:text-red-300 p-1"
+                            title="Delete user"
+                          >
+                            🗑️
+                          </button>
+                        )}
+                      </div>
                     </td>
                   </tr>
                 ))}
@@ -821,6 +883,22 @@ export default function AdminPage() {
               className="btn-christmas"
             >
               {actionLoading === "sync" ? "Syncing..." : "🔄 Sync Now"}
+            </button>
+          </div>
+
+          {/* Reset Event Notifications */}
+          <div className="christmas-card p-6">
+            <h2 className="text-xl font-bold text-christmas-gold mb-4">🔔 Event Reminder Notifications</h2>
+            <p className="text-christmas-cream/70 text-sm mb-4">
+              Reset all users&apos; event reminder notifications. After resetting, users will see the 
+              &quot;Don&apos;t forget to check events&quot; reminder again when they visit the dashboard.
+            </p>
+            <button
+              onClick={handleResetNotifications}
+              disabled={actionLoading === "reset-notifications"}
+              className="btn-christmas"
+            >
+              {actionLoading === "reset-notifications" ? "Resetting..." : "🔔 Reset All Notifications"}
             </button>
           </div>
 
