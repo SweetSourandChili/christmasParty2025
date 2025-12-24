@@ -213,7 +213,7 @@ export default function TicketPage() {
               className="inline-block bg-white p-4 rounded-lg shadow-lg hover:shadow-xl transition-all hover:scale-105 cursor-pointer"
             >
               <QRCodeSVG 
-                value={ticket.id} 
+                value={`${typeof window !== 'undefined' ? window.location.origin : ''}/verify/${ticket.id}`}
                 size={180}
                 level="H"
                 includeMargin={true}
@@ -224,8 +224,6 @@ export default function TicketPage() {
             <p className="text-christmas-gold text-sm mt-4 font-medium">
               👆 {language === "tr" ? "Büyütmek için tıkla" : "Tap to enlarge"}
             </p>
-            <p className="text-xs text-christmas-cream/50 mt-3">{t("ticketId")}</p>
-            <p className="font-mono text-christmas-gold text-xs mt-1">{ticket.id}</p>
             <p className="text-christmas-cream/40 text-xs mt-3">
               {language === "tr" 
                 ? "Parti girişinde bu QR kodu gösterin" 
@@ -254,7 +252,7 @@ export default function TicketPage() {
               </h3>
               <div className="flex justify-center">
                 <QRCodeSVG 
-                  value={ticket.id} 
+                  value={`${typeof window !== 'undefined' ? window.location.origin : ''}/verify/${ticket.id}`}
                   size={280}
                   level="H"
                   includeMargin={true}
@@ -264,9 +262,6 @@ export default function TicketPage() {
               </div>
               <p className="text-gray-600 font-medium mt-4">
                 {ticket.user?.name || session.user.name}
-              </p>
-              <p className="text-gray-400 text-sm mt-1 font-mono">
-                {ticket.id}
               </p>
               <button
                 onClick={() => setShowQRModal(false)}
