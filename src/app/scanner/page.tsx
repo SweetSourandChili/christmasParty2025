@@ -212,85 +212,58 @@ export default function ScannerPage() {
         )}
 
         {scanning && (
-          <div className="relative">
-            {/* Camera Video Container */}
-            <div className="relative overflow-hidden rounded-lg border-4 border-christmas-gold bg-black" style={{ minHeight: '350px' }}>
+          <div>
+            {/* Camera Video - Simple and visible */}
+            <div className="relative rounded-lg overflow-hidden border-4 border-christmas-gold">
               <video 
                 ref={videoRef}
                 autoPlay
                 playsInline
                 muted
+                className="w-full bg-black"
                 style={{
-                  width: '100%',
-                  height: '350px',
-                  objectFit: 'cover',
-                  display: 'block'
+                  minHeight: '400px',
+                  maxHeight: '500px',
+                  objectFit: 'cover'
                 }}
               />
               
-              {/* Loading overlay while camera initializes */}
-              {!cameraReady && (
-                <div className="absolute inset-0 flex items-center justify-center bg-black">
-                  <div className="text-center">
-                    <div className="spinner mb-3" />
-                    <p className="text-white text-sm">
-                      {language === "tr" ? "Kamera açılıyor..." : "Opening camera..."}
-                    </p>
-                  </div>
-                </div>
-              )}
-              
-              {/* Scanning Overlay */}
-              {cameraReady && (
-                <div className="absolute inset-0 pointer-events-none">
-                  {/* Semi-transparent overlay */}
-                  <div className="absolute inset-0 bg-black/40" />
+              {/* Simple scanning frame overlay - doesn't block video */}
+              <div className="absolute inset-0 pointer-events-none flex items-center justify-center">
+                {/* Scanning square frame */}
+                <div className="w-56 h-56 relative">
+                  {/* Corner brackets only - no dark overlay */}
+                  <div className="absolute top-0 left-0 w-12 h-12 border-t-4 border-l-4 border-christmas-gold" />
+                  <div className="absolute top-0 right-0 w-12 h-12 border-t-4 border-r-4 border-christmas-gold" />
+                  <div className="absolute bottom-0 left-0 w-12 h-12 border-b-4 border-l-4 border-christmas-gold" />
+                  <div className="absolute bottom-0 right-0 w-12 h-12 border-b-4 border-r-4 border-christmas-gold" />
                   
-                  {/* Clear scanning area */}
-                  <div className="absolute inset-0 flex items-center justify-center">
-                    <div className="relative" style={{ width: '220px', height: '220px' }}>
-                      {/* Cut out the center */}
-                      <div 
-                        className="absolute inset-0 bg-transparent border-2 border-white/30"
-                        style={{
-                          boxShadow: '0 0 0 2000px rgba(0, 0, 0, 0.5)'
-                        }}
-                      />
-                      
-                      {/* Corner brackets */}
-                      <div className="absolute -top-1 -left-1 w-10 h-10 border-t-4 border-l-4 border-christmas-gold" />
-                      <div className="absolute -top-1 -right-1 w-10 h-10 border-t-4 border-r-4 border-christmas-gold" />
-                      <div className="absolute -bottom-1 -left-1 w-10 h-10 border-b-4 border-l-4 border-christmas-gold" />
-                      <div className="absolute -bottom-1 -right-1 w-10 h-10 border-b-4 border-r-4 border-christmas-gold" />
-                      
-                      {/* Animated scan line */}
-                      <div 
-                        className="absolute left-1 right-1 h-0.5 bg-green-400"
-                        style={{
-                          animation: 'scanLine 2s ease-in-out infinite',
-                          boxShadow: '0 0 8px 2px rgba(74, 222, 128, 0.5)'
-                        }}
-                      />
-                    </div>
-                  </div>
-
-                  {/* Instruction text */}
-                  <div className="absolute bottom-6 left-0 right-0 text-center">
-                    <span className="bg-black/70 text-white text-sm px-4 py-2 rounded-full">
-                      {language === "tr" 
-                        ? "📱 QR kodu kareye hizalayın"
-                        : "📱 Align QR code within the square"}
-                    </span>
-                  </div>
+                  {/* Scanning line */}
+                  <div 
+                    className="absolute left-2 right-2 h-1 bg-green-500 rounded"
+                    style={{
+                      animation: 'scanLine 2s ease-in-out infinite',
+                      boxShadow: '0 0 10px 3px rgba(34, 197, 94, 0.6)'
+                    }}
+                  />
                 </div>
-              )}
+              </div>
+
+              {/* Bottom instruction */}
+              <div className="absolute bottom-3 left-0 right-0 text-center">
+                <span className="bg-black/80 text-white text-sm px-4 py-2 rounded-full">
+                  {language === "tr" 
+                    ? "📱 QR kodu kareye hizalayın"
+                    : "📱 Align QR code within the square"}
+                </span>
+              </div>
             </div>
 
             <button
               onClick={stopScanning}
-              className="mt-4 w-full py-3 bg-red-600 hover:bg-red-700 rounded-lg text-white font-medium transition"
+              className="mt-4 w-full py-3 bg-red-600 hover:bg-red-700 rounded-lg text-white font-bold transition"
             >
-              {language === "tr" ? "⏹ Taramayı Durdur" : "⏹ Stop Scanning"}
+              ⏹ {language === "tr" ? "Taramayı Durdur" : "Stop Scanning"}
             </button>
           </div>
         )}
