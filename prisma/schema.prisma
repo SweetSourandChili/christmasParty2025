@@ -18,6 +18,7 @@ model User {
   password      String
   emailVerified Boolean   @default(false)
   isAdmin       Boolean   @default(false)
+  isBodyguard   Boolean   @default(false)
   notificationCount Int   @default(0)
   language      String    @default("tr")
   createdAt     DateTime  @default(now())

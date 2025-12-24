@@ -7,6 +7,7 @@ declare module "next-auth" {
     email: string;
     phone: string;
     isAdmin: boolean;
+    isBodyguard: boolean;
   }
 
   interface Session {
@@ -16,6 +17,7 @@ declare module "next-auth" {
       email: string;
       phone: string;
       isAdmin: boolean;
+      isBodyguard: boolean;
     };
   }
 }
@@ -26,5 +28,6 @@ declare module "next-auth/jwt" {
     email: string;
     phone: string;
     isAdmin: boolean;
+    isBodyguard: boolean;
   }
 }

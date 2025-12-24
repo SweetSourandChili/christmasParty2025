@@ -9,6 +9,7 @@ interface User {
   name: string;
   phone: string;
   isAdmin: boolean;
+  isBodyguard: boolean;
   createdAt: string;
   ticket: {
     id: string;
@@ -387,6 +388,29 @@ export default function AdminPage() {
     }
   };
 
+  const handleToggleBodyguard = async (userId: string, currentStatus: boolean) => {
+    setActionLoading(`bodyguard-${userId}`);
+
+    try {
+      const res = await fetch("/api/admin/bodyguard", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ userId, isBodyguard: !currentStatus }),
+      });
+
+      if (!res.ok) {
+        const data = await res.json();
+        throw new Error(data.error);
+      }
+
+      fetchData();
+    } catch (error: any) {
+      alert(error.message);
+    } finally {
+      setActionLoading(null);
+    }
+  };
+
   const getStatusBadgeClass = (status: string) => {
     switch (status) {
       case "ACTIVATED":
@@ -515,6 +539,7 @@ export default function AdminPage() {
                   <th>Phone</th>
                   <th>Performances</th>
                   <th>Ticket Status</th>
+                  <th>Bodyguard</th>
                   <th>Actions</th>
                 </tr>
               </thead>
@@ -559,6 +584,21 @@ export default function AdminPage() {
                         <span className="text-christmas-cream/50 text-sm">
                           No ticket
                         </span>
+                      )}
+                    </td>
+                    <td>
+                      {!user.isAdmin && (
+                        <button
+                          onClick={() => handleToggleBodyguard(user.id, user.isBodyguard)}
+                          disabled={actionLoading === `bodyguard-${user.id}`}
+                          className={`px-3 py-1 rounded text-xs font-medium transition ${
+                            user.isBodyguard
+                              ? "bg-blue-600 text-white hover:bg-blue-700"
+                              : "bg-christmas-dark border border-christmas-gold/30 text-christmas-cream/70 hover:border-christmas-gold"
+                          }`}
+                        >
+                          {actionLoading === `bodyguard-${user.id}` ? "..." : user.isBodyguard ? "🛡️ Yes" : "No"}
+                        </button>
                       )}
                     </td>
                     <td>

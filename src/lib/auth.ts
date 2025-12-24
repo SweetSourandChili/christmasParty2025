@@ -43,6 +43,7 @@ export const authOptions: NextAuthOptions = {
           email: user.email,
           phone: user.phone,
           isAdmin: user.isAdmin,
+          isBodyguard: user.isBodyguard,
         };
       },
     }),
@@ -58,6 +59,7 @@ export const authOptions: NextAuthOptions = {
         token.email = user.email;
         token.phone = user.phone;
         token.isAdmin = user.isAdmin;
+        token.isBodyguard = user.isBodyguard;
       }
       return token;
     },
@@ -67,6 +69,7 @@ export const authOptions: NextAuthOptions = {
         session.user.email = token.email as string;
         session.user.phone = token.phone as string;
         session.user.isAdmin = token.isAdmin as boolean;
+        session.user.isBodyguard = token.isBodyguard as boolean;
       }
       return session;
     },
