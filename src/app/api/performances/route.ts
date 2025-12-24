@@ -77,6 +77,30 @@ export async function POST(request: NextRequest) {
       data: { status: "PAYMENT_PENDING" },
     });
 
+    // Auto-join creator to "Performance" event
+    const performanceEvent = await prisma.event.findFirst({
+      where: { name: "Performance" },
+    });
+
+    if (performanceEvent) {
+      await prisma.eventRegistration.upsert({
+        where: {
+          userId_eventId: {
+            userId: session.user.id,
+            eventId: performanceEvent.id,
+          },
+        },
+        update: {
+          joining: true,
+        },
+        create: {
+          userId: session.user.id,
+          eventId: performanceEvent.id,
+          joining: true,
+        },
+      });
+    }
+
     return NextResponse.json(performance, { status: 201 });
   } catch (error) {
     console.error("Create performance error:", error);
