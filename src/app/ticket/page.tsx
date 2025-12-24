@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import TicketStatus from "@/components/TicketStatus";
 import Link from "next/link";
 import { useLanguage } from "@/components/LanguageProvider";
+import { QRCodeSVG } from "qrcode.react";
 
 interface Ticket {
   id: string;
@@ -201,10 +202,28 @@ export default function TicketPage() {
             </p>
           </div>
 
-          {/* Ticket ID */}
-          <div className="bg-christmas-dark/50 rounded-lg p-4 text-center">
-            <p className="text-xs text-christmas-cream/50 mb-1">{t("ticketId")}</p>
-            <p className="font-mono text-christmas-gold text-sm">{ticket.id}</p>
+          {/* QR Code Section */}
+          <div className="bg-christmas-dark/50 rounded-lg p-6 text-center">
+            <p className="text-sm text-christmas-gold mb-4 font-medium">
+              {language === "tr" ? "Giriş için QR Kodunuz" : "Your Entry QR Code"}
+            </p>
+            <div className="inline-block bg-white p-4 rounded-lg shadow-lg">
+              <QRCodeSVG 
+                value={ticket.id} 
+                size={180}
+                level="H"
+                includeMargin={true}
+                bgColor="#ffffff"
+                fgColor="#1a1a2e"
+              />
+            </div>
+            <p className="text-xs text-christmas-cream/50 mt-4">{t("ticketId")}</p>
+            <p className="font-mono text-christmas-gold text-xs mt-1">{ticket.id}</p>
+            <p className="text-christmas-cream/40 text-xs mt-3">
+              {language === "tr" 
+                ? "Parti girişinde bu QR kodu gösterin" 
+                : "Show this QR code at party entrance"}
+            </p>
           </div>
         </div>
 

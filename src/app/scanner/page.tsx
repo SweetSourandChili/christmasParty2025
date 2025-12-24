@@ -4,6 +4,7 @@ import { useSession } from "next-auth/react";
 import { useEffect, useState, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { useLanguage } from "@/components/LanguageProvider";
+import { BrowserMultiFormatReader } from "@zxing/browser";
 
 interface VerificationResult {
   valid: boolean;
@@ -23,14 +24,14 @@ interface VerificationResult {
 export default function ScannerPage() {
   const { data: session, status } = useSession();
   const router = useRouter();
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
   const [scanning, setScanning] = useState(false);
   const [result, setResult] = useState<VerificationResult | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [manualTicketId, setManualTicketId] = useState("");
+  const [isVerifying, setIsVerifying] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
-  const canvasRef = useRef<HTMLCanvasElement>(null);
-  const streamRef = useRef<MediaStream | null>(null);
+  const readerRef = useRef<BrowserMultiFormatReader | null>(null);
 
   useEffect(() => {
     if (status === "unauthenticated") {
@@ -41,11 +42,9 @@ export default function ScannerPage() {
   }, [status, session, router]);
 
   useEffect(() => {
-    // Cleanup camera stream on unmount
+    // Cleanup on unmount
     return () => {
-      if (streamRef.current) {
-        streamRef.current.getTracks().forEach(track => track.stop());
-      }
+      stopScanning();
     };
   }, []);
 
@@ -54,80 +53,57 @@ export default function ScannerPage() {
     setResult(null);
     
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({ 
-        video: { facingMode: "environment" } 
-      });
+      readerRef.current = new BrowserMultiFormatReader();
       
-      streamRef.current = stream;
+      const videoInputDevices = await BrowserMultiFormatReader.listVideoInputDevices();
       
-      if (videoRef.current) {
-        videoRef.current.srcObject = stream;
-        videoRef.current.play();
-        setScanning(true);
-        scanQRCode();
+      if (videoInputDevices.length === 0) {
+        setError(language === "tr" 
+          ? "Kamera bulunamadı. Lütfen bilet ID'sini manuel girin."
+          : "No camera found. Please enter ticket ID manually.");
+        return;
       }
+
+      // Prefer back camera
+      const backCamera = videoInputDevices.find(device => 
+        device.label.toLowerCase().includes("back") || 
+        device.label.toLowerCase().includes("arka")
+      );
+      const selectedDeviceId = backCamera?.deviceId || videoInputDevices[0].deviceId;
+
+      setScanning(true);
+
+      readerRef.current.decodeFromVideoDevice(
+        selectedDeviceId,
+        videoRef.current!,
+        (result, error) => {
+          if (result) {
+            const ticketId = result.getText();
+            stopScanning();
+            verifyTicket(ticketId);
+          }
+        }
+      );
     } catch (err) {
-      setError("Camera access denied. Please allow camera access or enter ticket ID manually.");
       console.error("Camera error:", err);
+      setError(language === "tr"
+        ? "Kamera erişimi reddedildi. Lütfen kamera iznini verin veya bilet ID'sini manuel girin."
+        : "Camera access denied. Please allow camera access or enter ticket ID manually.");
     }
   };
 
   const stopScanning = () => {
-    if (streamRef.current) {
-      streamRef.current.getTracks().forEach(track => track.stop());
-      streamRef.current = null;
+    if (readerRef.current) {
+      readerRef.current.reset();
+      readerRef.current = null;
     }
     setScanning(false);
   };
 
-  const scanQRCode = () => {
-    if (!videoRef.current || !canvasRef.current || !scanning) return;
-
-    const video = videoRef.current;
-    const canvas = canvasRef.current;
-    const ctx = canvas.getContext("2d");
-
-    if (!ctx || video.readyState !== video.HAVE_ENOUGH_DATA) {
-      requestAnimationFrame(scanQRCode);
-      return;
-    }
-
-    canvas.width = video.videoWidth;
-    canvas.height = video.videoHeight;
-    ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-
-    const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-    
-    // Simple QR code detection using the BarcodeDetector API if available
-    if ("BarcodeDetector" in window) {
-      // @ts-ignore - BarcodeDetector might not be in types
-      const barcodeDetector = new BarcodeDetector({ formats: ["qr_code"] });
-      barcodeDetector.detect(imageData).then((barcodes: any[]) => {
-        if (barcodes.length > 0) {
-          const ticketId = barcodes[0].rawValue;
-          stopScanning();
-          verifyTicket(ticketId);
-        } else if (scanning) {
-          requestAnimationFrame(scanQRCode);
-        }
-      }).catch(() => {
-        if (scanning) requestAnimationFrame(scanQRCode);
-      });
-    } else {
-      // Fallback - just keep scanning, user can use manual entry
-      if (scanning) requestAnimationFrame(scanQRCode);
-    }
-  };
-
-  useEffect(() => {
-    if (scanning) {
-      scanQRCode();
-    }
-  }, [scanning]);
-
   const verifyTicket = async (ticketId: string) => {
     setError(null);
     setResult(null);
+    setIsVerifying(true);
 
     try {
       const res = await fetch("/api/ticket/verify", {
@@ -139,7 +115,11 @@ export default function ScannerPage() {
       const data = await res.json();
       setResult(data);
     } catch (err) {
-      setError("Failed to verify ticket. Please try again.");
+      setError(language === "tr" 
+        ? "Bilet doğrulanamadı. Lütfen tekrar deneyin."
+        : "Failed to verify ticket. Please try again.");
+    } finally {
+      setIsVerifying(false);
     }
   };
 
@@ -172,122 +152,175 @@ export default function ScannerPage() {
     <div className="max-w-2xl mx-auto p-4 sm:p-6 lg:p-8">
       <div className="text-center mb-8">
         <h1 className="text-3xl font-bold text-christmas-gold">
-          🛡️ Ticket Scanner
+          🛡️ {language === "tr" ? "Bilet Tarayıcı" : "Ticket Scanner"}
         </h1>
         <p className="text-christmas-cream/70 mt-2">
-          Scan QR codes to verify guest tickets
+          {language === "tr" 
+            ? "Misafir biletlerini doğrulamak için QR kodları tarayın"
+            : "Scan QR codes to verify guest tickets"}
         </p>
       </div>
 
       {/* Scanner Section */}
       <div className="christmas-card p-6 mb-6">
-        {!scanning && !result && (
+        {!scanning && !result && !isVerifying && (
           <div className="text-center">
             <button
               onClick={startScanning}
               className="btn-christmas text-lg px-8 py-4 mb-4"
             >
-              📷 Start Camera Scanner
+              📷 {language === "tr" ? "Kamerayı Başlat" : "Start Camera Scanner"}
             </button>
             <p className="text-christmas-cream/60 text-sm">
-              Or enter ticket ID manually below
+              {language === "tr" 
+                ? "Veya bilet ID'sini aşağıya manuel girin"
+                : "Or enter ticket ID manually below"}
             </p>
           </div>
         )}
 
         {scanning && (
           <div className="relative">
-            <video 
-              ref={videoRef} 
-              className="w-full rounded-lg border-2 border-christmas-gold"
-              playsInline
-              muted
-            />
-            <canvas ref={canvasRef} className="hidden" />
-            <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-              <div className="w-48 h-48 border-2 border-christmas-gold/50 rounded-lg animate-pulse" />
+            {/* Camera Video */}
+            <div className="relative overflow-hidden rounded-lg border-2 border-christmas-gold bg-black">
+              <video 
+                ref={videoRef} 
+                className="w-full h-[400px] object-cover"
+                playsInline
+                muted
+              />
+              
+              {/* Scanning Overlay */}
+              <div className="absolute inset-0 flex items-center justify-center">
+                {/* Dark overlay with transparent center */}
+                <div className="absolute inset-0 bg-black/50" />
+                
+                {/* Scanning Square */}
+                <div className="relative w-64 h-64">
+                  {/* Transparent center */}
+                  <div className="absolute inset-0 bg-transparent" style={{
+                    boxShadow: '0 0 0 9999px rgba(0, 0, 0, 0.5)'
+                  }} />
+                  
+                  {/* Corner brackets */}
+                  <div className="absolute top-0 left-0 w-8 h-8 border-t-4 border-l-4 border-christmas-gold rounded-tl-lg" />
+                  <div className="absolute top-0 right-0 w-8 h-8 border-t-4 border-r-4 border-christmas-gold rounded-tr-lg" />
+                  <div className="absolute bottom-0 left-0 w-8 h-8 border-b-4 border-l-4 border-christmas-gold rounded-bl-lg" />
+                  <div className="absolute bottom-0 right-0 w-8 h-8 border-b-4 border-r-4 border-christmas-gold rounded-br-lg" />
+                  
+                  {/* Scanning line animation */}
+                  <div className="absolute left-2 right-2 h-0.5 bg-christmas-gold animate-scan-line" />
+                </div>
+              </div>
+
+              {/* Scanning text */}
+              <div className="absolute bottom-4 left-0 right-0 text-center">
+                <p className="text-white text-sm bg-black/50 inline-block px-4 py-2 rounded-full">
+                  {language === "tr" 
+                    ? "QR kodu kareye hizalayın"
+                    : "Align QR code within the square"}
+                </p>
+              </div>
             </div>
+
             <button
               onClick={stopScanning}
-              className="mt-4 w-full py-2 border border-christmas-gold/50 rounded-lg text-christmas-cream hover:bg-christmas-gold/10 transition"
+              className="mt-4 w-full py-3 border border-christmas-gold/50 rounded-lg text-christmas-cream hover:bg-christmas-gold/10 transition font-medium"
             >
-              Stop Scanning
+              {language === "tr" ? "Taramayı Durdur" : "Stop Scanning"}
             </button>
           </div>
         )}
 
+        {/* Loading State */}
+        {isVerifying && (
+          <div className="text-center py-12">
+            <div className="spinner mb-4" />
+            <p className="text-christmas-cream">
+              {language === "tr" ? "Bilet doğrulanıyor..." : "Verifying ticket..."}
+            </p>
+          </div>
+        )}
+
         {/* Result Display */}
-        {result && (
+        {result && !isVerifying && (
           <div className={`p-6 rounded-lg text-center ${
             result.valid 
               ? "bg-green-900/30 border-2 border-green-500" 
               : "bg-red-900/30 border-2 border-red-500"
           }`}>
-            <div className="text-6xl mb-4">
+            <div className="text-7xl mb-4">
               {result.valid ? "✅" : "❌"}
             </div>
-            <h2 className={`text-2xl font-bold mb-2 ${
+            <h2 className={`text-3xl font-bold mb-2 ${
               result.valid ? "text-green-400" : "text-red-400"
             }`}>
-              {result.valid ? "ENTRY ALLOWED" : "ENTRY DENIED"}
+              {result.valid 
+                ? (language === "tr" ? "GİRİŞ İZNİ VAR" : "ENTRY ALLOWED")
+                : (language === "tr" ? "GİRİŞ REDDEDİLDİ" : "ENTRY DENIED")}
             </h2>
             {result.ticket && (
-              <div className="mt-4 text-left bg-christmas-dark/50 rounded-lg p-4">
-                <p className="text-christmas-gold font-medium">Guest Details:</p>
-                <p className="text-christmas-cream text-lg font-bold mt-1">
+              <div className="mt-6 text-left bg-christmas-dark/50 rounded-lg p-5">
+                <p className="text-christmas-gold font-medium text-sm mb-2">
+                  {language === "tr" ? "Misafir Bilgileri:" : "Guest Details:"}
+                </p>
+                <p className="text-christmas-cream text-2xl font-bold">
                   {result.ticket.user.name}
                 </p>
-                <p className="text-christmas-cream/70 text-sm">
+                <p className="text-christmas-cream/70">
                   {result.ticket.user.phone}
                 </p>
-                <p className="mt-2">
-                  <span className="text-christmas-cream/60">Status: </span>
-                  <span className={`font-bold ${
+                <div className="mt-4 pt-4 border-t border-christmas-gold/20">
+                  <span className="text-christmas-cream/60 text-sm">
+                    {language === "tr" ? "Durum: " : "Status: "}
+                  </span>
+                  <span className={`text-lg font-bold ${
                     result.ticket.status === "ACTIVATED" 
                       ? "text-green-400" 
                       : result.ticket.status === "PAYMENT_PENDING"
                         ? "text-yellow-400"
                         : "text-red-400"
                   }`}>
-                    {result.ticket.status.replace("_", " ")}
+                    {result.ticket.status === "ACTIVATED" 
+                      ? (language === "tr" ? "AKTİF" : "ACTIVATED")
+                      : result.ticket.status === "PAYMENT_PENDING"
+                        ? (language === "tr" ? "ÖDEME BEKLİYOR" : "PAYMENT PENDING")
+                        : (language === "tr" ? "AKTİF DEĞİL" : "NOT ACTIVATED")}
                   </span>
-                </p>
+                </div>
               </div>
             )}
-            {result.message && (
-              <p className="mt-4 text-christmas-cream/80">{result.message}</p>
-            )}
             {result.error && (
-              <p className="mt-4 text-red-400">{result.error}</p>
+              <p className="mt-4 text-red-400 font-medium">{result.error}</p>
             )}
             <button
               onClick={resetScanner}
-              className="mt-6 btn-christmas"
+              className="mt-6 btn-christmas text-lg px-8 py-3"
             >
-              Scan Next Ticket
+              {language === "tr" ? "Sonraki Bileti Tara" : "Scan Next Ticket"}
             </button>
           </div>
         )}
 
-        {error && (
-          <div className="bg-red-900/30 border border-red-500 rounded-lg p-4 text-center mb-4">
+        {error && !result && (
+          <div className="bg-red-900/30 border border-red-500 rounded-lg p-4 text-center">
             <p className="text-red-400">{error}</p>
           </div>
         )}
       </div>
 
       {/* Manual Entry */}
-      {!result && (
+      {!result && !scanning && !isVerifying && (
         <div className="christmas-card p-6">
           <h3 className="text-lg font-bold text-christmas-gold mb-4">
-            📝 Manual Ticket Verification
+            📝 {language === "tr" ? "Manuel Bilet Doğrulama" : "Manual Ticket Verification"}
           </h3>
           <form onSubmit={handleManualVerify} className="flex gap-3">
             <input
               type="text"
               value={manualTicketId}
               onChange={(e) => setManualTicketId(e.target.value)}
-              placeholder="Enter Ticket ID..."
+              placeholder={language === "tr" ? "Bilet ID'sini girin..." : "Enter Ticket ID..."}
               className="input-christmas flex-1"
             />
             <button
@@ -295,7 +328,7 @@ export default function ScannerPage() {
               disabled={!manualTicketId.trim()}
               className="btn-christmas"
             >
-              Verify
+              {language === "tr" ? "Doğrula" : "Verify"}
             </button>
           </form>
         </div>
@@ -304,24 +337,56 @@ export default function ScannerPage() {
       {/* Instructions */}
       <div className="christmas-card p-6 mt-6">
         <h3 className="text-lg font-bold text-christmas-gold mb-3">
-          📋 Instructions
+          📋 {language === "tr" ? "Talimatlar" : "Instructions"}
         </h3>
-        <ul className="space-y-2 text-christmas-cream/80 text-sm">
-          <li className="flex items-start gap-2">
-            <span className="text-green-400">✓</span>
-            <span><strong className="text-green-400">ACTIVATED</strong> - Guest can enter the party</span>
+        <ul className="space-y-3 text-christmas-cream/80 text-sm">
+          <li className="flex items-start gap-3">
+            <span className="text-green-400 text-lg">✓</span>
+            <span>
+              <strong className="text-green-400">
+                {language === "tr" ? "AKTİF" : "ACTIVATED"}
+              </strong> 
+              {language === "tr" 
+                ? " - Misafir partiye girebilir"
+                : " - Guest can enter the party"}
+            </span>
           </li>
-          <li className="flex items-start gap-2">
-            <span className="text-yellow-400">⚠</span>
-            <span><strong className="text-yellow-400">PAYMENT PENDING</strong> - Guest needs to complete payment first</span>
+          <li className="flex items-start gap-3">
+            <span className="text-yellow-400 text-lg">⚠</span>
+            <span>
+              <strong className="text-yellow-400">
+                {language === "tr" ? "ÖDEME BEKLİYOR" : "PAYMENT PENDING"}
+              </strong>
+              {language === "tr" 
+                ? " - Misafir önce ödemeyi tamamlamalı"
+                : " - Guest needs to complete payment first"}
+            </span>
           </li>
-          <li className="flex items-start gap-2">
-            <span className="text-red-400">✗</span>
-            <span><strong className="text-red-400">NOT ACTIVATED</strong> - Guest cannot enter</span>
+          <li className="flex items-start gap-3">
+            <span className="text-red-400 text-lg">✗</span>
+            <span>
+              <strong className="text-red-400">
+                {language === "tr" ? "AKTİF DEĞİL" : "NOT ACTIVATED"}
+              </strong>
+              {language === "tr" 
+                ? " - Misafir giremez"
+                : " - Guest cannot enter"}
+            </span>
           </li>
         </ul>
       </div>
+
+      {/* Add scanning animation styles */}
+      <style jsx>{`
+        @keyframes scan-line {
+          0% { top: 0; }
+          50% { top: calc(100% - 2px); }
+          100% { top: 0; }
+        }
+        .animate-scan-line {
+          animation: scan-line 2s ease-in-out infinite;
+        }
+      `}</style>
     </div>
   );
 }
-
