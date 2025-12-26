@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { logAction } from "@/lib/serverLogger";
 
 // POST - Vote for a performance
 export async function POST(
@@ -80,6 +81,14 @@ export async function POST(
         points,
       },
     });
+
+    // Log the action
+    await logAction(
+      session.user.id,
+      "VOTE_PERFORMANCE",
+      `Voted ${points} points for performance: ${performance.name}`,
+      { performanceId: id, performanceName: performance.name, points }
+    );
 
     return NextResponse.json(vote);
   } catch (error) {

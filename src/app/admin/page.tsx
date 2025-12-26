@@ -3,6 +3,7 @@
 import { useSession } from "next-auth/react";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import { logAction } from "@/lib/logger";
 
 interface User {
   id: string;
@@ -111,6 +112,7 @@ export default function AdminPage() {
   useEffect(() => {
     if (session?.user?.isAdmin) {
       fetchData();
+      logAction("VIEW_ADMIN", "Viewed admin panel");
     }
   }, [session]);
 
@@ -536,7 +538,10 @@ export default function AdminPage() {
       {/* Tabs */}
       <div className="flex gap-2 mb-6 border-b border-christmas-gold/30 pb-2 overflow-x-auto">
         <button
-          onClick={() => setActiveTab("users")}
+          onClick={() => {
+            setActiveTab("users");
+            logAction("CLICK_TAB", "Clicked users tab in admin", { tab: "users" });
+          }}
           className={`px-4 py-2 rounded-t-lg transition whitespace-nowrap ${
             activeTab === "users"
               ? "bg-christmas-gold text-christmas-dark font-medium"
@@ -546,7 +551,10 @@ export default function AdminPage() {
           👥 Users & Tickets
         </button>
         <button
-          onClick={() => setActiveTab("events")}
+          onClick={() => {
+            setActiveTab("events");
+            logAction("CLICK_TAB", "Clicked events tab in admin", { tab: "events" });
+          }}
           className={`px-4 py-2 rounded-t-lg transition whitespace-nowrap ${
             activeTab === "events"
               ? "bg-christmas-gold text-christmas-dark font-medium"
@@ -556,7 +564,10 @@ export default function AdminPage() {
           🎉 Events
         </button>
         <button
-          onClick={() => setActiveTab("feedback")}
+          onClick={() => {
+            setActiveTab("feedback");
+            logAction("CLICK_TAB", "Clicked feedback tab in admin", { tab: "feedback" });
+          }}
           className={`px-4 py-2 rounded-t-lg transition whitespace-nowrap ${
             activeTab === "feedback"
               ? "bg-christmas-gold text-christmas-dark font-medium"
@@ -566,7 +577,10 @@ export default function AdminPage() {
           💬 Feedback ({feedbacks.length})
         </button>
         <button
-          onClick={() => setActiveTab("settings")}
+          onClick={() => {
+            setActiveTab("settings");
+            logAction("CLICK_TAB", "Clicked settings tab in admin", { tab: "settings" });
+          }}
           className={`px-4 py-2 rounded-t-lg transition whitespace-nowrap ${
             activeTab === "settings"
               ? "bg-christmas-gold text-christmas-dark font-medium"

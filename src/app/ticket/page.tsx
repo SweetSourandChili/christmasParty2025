@@ -7,6 +7,7 @@ import TicketStatus from "@/components/TicketStatus";
 import Link from "next/link";
 import { useLanguage } from "@/components/LanguageProvider";
 import { QRCodeSVG } from "qrcode.react";
+import { logAction } from "@/lib/logger";
 
 interface Ticket {
   id: string;
@@ -50,6 +51,7 @@ export default function TicketPage() {
   useEffect(() => {
     if (session) {
       fetchTicket();
+      logAction("VIEW_TICKET", "Viewed ticket page");
     }
   }, [session]);
 
@@ -224,7 +226,10 @@ export default function TicketPage() {
               {language === "tr" ? "Giriş için QR Kodunuz" : "Your Entry QR Code"}
             </p>
             <button 
-              onClick={() => setShowQRModal(true)}
+              onClick={() => {
+                setShowQRModal(true);
+                logAction("OPEN_MODAL", "Opened QR code modal");
+              }}
               className="inline-block bg-white p-4 rounded-lg shadow-lg hover:shadow-xl transition-all hover:scale-105 cursor-pointer"
             >
               <QRCodeSVG 
@@ -279,7 +284,10 @@ export default function TicketPage() {
                 {ticket.user?.name || session.user.name}
               </p>
               <button
-                onClick={() => setShowQRModal(false)}
+                onClick={() => {
+                  setShowQRModal(false);
+                  logAction("CLOSE_MODAL", "Closed QR code modal");
+                }}
                 className="mt-6 w-full py-3 bg-christmas-green text-white font-bold rounded-lg hover:bg-green-700 transition"
               >
                 {language === "tr" ? "Kapat" : "Close"}

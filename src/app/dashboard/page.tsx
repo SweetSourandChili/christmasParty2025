@@ -11,6 +11,7 @@ import PerformanceReminderModal, { shouldShowPerformanceReminder } from "@/compo
 import PlaylistReminderModal, { shouldShowPlaylistReminder } from "@/components/PlaylistReminderModal";
 import FeedbackForm from "@/components/FeedbackForm";
 import { useLanguage } from "@/components/LanguageProvider";
+import { logAction } from "@/lib/logger";
 
 interface Ticket {
   id: string;
@@ -52,6 +53,7 @@ export default function DashboardPage() {
     if (session) {
       fetchTicket();
       checkNotificationCount();
+      logAction("VIEW_DASHBOARD", "Viewed dashboard page");
     }
   }, [session]);
 

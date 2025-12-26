@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import PerformanceCommentsModal from "@/components/PerformanceCommentsModal";
 import { useLanguage } from "@/components/LanguageProvider";
+import { logAction } from "@/lib/logger";
 
 interface Performance {
   id: string;
@@ -70,6 +71,8 @@ export default function PerformancesPage() {
     if (session) {
       fetchPerformances();
       checkVotingStatus();
+      // Log page view
+      logAction("VIEW_PERFORMANCE", "Viewed performances page");
     }
   }, [session]);
 
@@ -116,6 +119,10 @@ export default function PerformancesPage() {
     if (activeTab === "voting" && (votingEnabled || session?.user?.isAdmin)) {
       fetchVotingData();
     }
+    // Log tab change
+    if (session && activeTab) {
+      logAction("CLICK_TAB", `Switched to ${activeTab} tab`, { tab: activeTab });
+    }
   }, [activeTab, votingEnabled, session?.user?.isAdmin]);
 
   const handleCreatePerformance = async (e: React.FormEvent) => {
@@ -146,6 +153,7 @@ export default function PerformancesPage() {
 
   const handleRegister = async (performanceId: string) => {
     setActionLoading(performanceId);
+    logAction("CLICK_BUTTON", "Clicked join performance button", { performanceId });
 
     try {
       const res = await fetch(`/api/performances/${performanceId}/register`, {
@@ -211,6 +219,7 @@ export default function PerformancesPage() {
 
   const handleVote = async (performanceId: string, points: number) => {
     setActionLoading(`vote-${performanceId}`);
+    logAction("CLICK_BUTTON", "Clicked vote button", { performanceId, points });
 
     try {
       const res = await fetch(`/api/performances/${performanceId}/vote`, {
@@ -296,7 +305,10 @@ export default function PerformancesPage() {
           </p>
         </div>
         <button
-          onClick={() => setShowCreateModal(true)}
+          onClick={() => {
+            setShowCreateModal(true);
+            logAction("OPEN_MODAL", "Opened create performance modal");
+          }}
           className="btn-christmas"
         >
           {t("createPerformance")}
@@ -306,7 +318,10 @@ export default function PerformancesPage() {
       {/* Tabs */}
       <div className="flex gap-2 mb-6 border-b border-christmas-gold/30 pb-2">
         <button
-          onClick={() => setActiveTab("performances")}
+          onClick={() => {
+            setActiveTab("performances");
+            logAction("CLICK_TAB", "Clicked performances tab", { tab: "performances" });
+          }}
           className={`px-4 py-2 rounded-t-lg transition ${
             activeTab === "performances"
               ? "bg-christmas-gold text-christmas-dark font-medium"
@@ -316,7 +331,10 @@ export default function PerformancesPage() {
           🎭 {t("performancesTab")}
         </button>
         <button
-          onClick={() => setActiveTab("voting")}
+          onClick={() => {
+            setActiveTab("voting");
+            logAction("CLICK_TAB", "Clicked voting tab", { tab: "voting" });
+          }}
           className={`px-4 py-2 rounded-t-lg transition ${
             activeTab === "voting"
               ? "bg-christmas-gold text-christmas-dark font-medium"
@@ -393,7 +411,10 @@ export default function PerformancesPage() {
                   {/* Comments & Edit Buttons */}
                   <div className="flex gap-2 mb-3">
                     <button
-                      onClick={() => setCommentsModal({ id: performance.id, name: performance.name })}
+                      onClick={() => {
+                        setCommentsModal({ id: performance.id, name: performance.name });
+                        logAction("OPEN_MODAL", `Opened comments modal for ${performance.name}`, { performanceId: performance.id });
+                      }}
                       className="flex-1 py-2 text-sm text-christmas-cream/70 hover:text-christmas-gold border border-christmas-gold/30 rounded-lg hover:border-christmas-gold/50 transition flex items-center justify-center gap-2"
                     >
                       💬 {t("comments")}
@@ -590,7 +611,10 @@ export default function PerformancesPage() {
 
       {/* Create Modal */}
       {showCreateModal && (
-        <div className="modal-overlay" onClick={() => setShowCreateModal(false)}>
+        <div className="modal-overlay" onClick={() => {
+          setShowCreateModal(false);
+          logAction("CLOSE_MODAL", "Closed create performance modal");
+        }}>
           <div
             className="christmas-card w-full max-w-md p-6 m-4"
             onClick={(e) => e.stopPropagation()}
@@ -656,7 +680,10 @@ export default function PerformancesPage() {
               <div className="flex gap-3 pt-4">
                 <button
                   type="button"
-                  onClick={() => setShowCreateModal(false)}
+                  onClick={() => {
+                    setShowCreateModal(false);
+                    logAction("CLOSE_MODAL", "Closed create performance modal");
+                  }}
                   className="flex-1 py-2 border border-christmas-gold/50 rounded-lg text-christmas-cream hover:bg-christmas-gold/10"
                 >
                   {t("cancel")}
@@ -745,7 +772,10 @@ export default function PerformancesPage() {
         <PerformanceCommentsModal
           performanceId={commentsModal.id}
           performanceName={commentsModal.name}
-          onClose={() => setCommentsModal(null)}
+          onClose={() => {
+            setCommentsModal(null);
+            logAction("CLOSE_MODAL", "Closed comments modal");
+          }}
         />
       )}
     </div>

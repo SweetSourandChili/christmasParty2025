@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { logAction } from "@/lib/serverLogger";
 
 // GET - Get app settings
 export async function GET() {
@@ -45,6 +46,11 @@ export async function PUT(request: NextRequest) {
           notificationCount: 0,
         },
       });
+      await logAction(
+        session.user.id,
+        "ADMIN_RESET_NOTIFICATIONS",
+        "Admin reset all user notification counts"
+      );
       return NextResponse.json({ success: true, message: "All notifications reset" });
     }
 
@@ -72,6 +78,22 @@ export async function PUT(request: NextRequest) {
           illusionMode: updateData.illusionMode ?? false,
         },
       });
+    }
+
+    // Log the action
+    if (updateData.votingEnabled !== undefined) {
+      await logAction(
+        session.user.id,
+        "ADMIN_TOGGLE_VOTING",
+        `Admin ${updateData.votingEnabled ? "enabled" : "disabled"} voting`
+      );
+    }
+    if (updateData.illusionMode !== undefined) {
+      await logAction(
+        session.user.id,
+        "ADMIN_TOGGLE_ILLUSION",
+        `Admin ${updateData.illusionMode ? "activated" : "deactivated"} illusion mode`
+      );
     }
 
     return NextResponse.json(settings);

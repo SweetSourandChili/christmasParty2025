@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import prisma from "@/lib/prisma";
+import { logAction } from "@/lib/serverLogger";
 
 // GET comments for a performance
 export async function GET(
@@ -89,6 +90,14 @@ export async function POST(
         },
       },
     });
+
+    // Log the action
+    await logAction(
+      session.user.id,
+      "COMMENT_PERFORMANCE",
+      `Commented on performance: ${performance.name}`,
+      { performanceId, performanceName: performance.name, commentLength: content.trim().length }
+    );
 
     return NextResponse.json(comment, { status: 201 });
   } catch (error) {

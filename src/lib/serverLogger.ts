@@ -27,9 +27,19 @@ export type LogAction =
   | "ADMIN_SYNC_PERFORMANCE_EVENT"
   | "ADMIN_TOGGLE_BODYGUARD"
   | "ADMIN_APPROVE_TICKET"
+  | "ADMIN_RESET_NOTIFICATIONS"
   | "VERIFY_TICKET"
   | "UPDATE_PROFILE"
-  | "VIEW_PAGE";
+  | "VIEW_PAGE"
+  | "CLICK_TAB"
+  | "OPEN_MODAL"
+  | "CLOSE_MODAL"
+  | "CLICK_BUTTON"
+  | "VIEW_PERFORMANCE"
+  | "VIEW_EVENT"
+  | "VIEW_TICKET"
+  | "VIEW_DASHBOARD"
+  | "VIEW_ADMIN";
 
 /**
  * Log a user action (server-side)

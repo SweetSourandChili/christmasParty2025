@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import prisma from "@/lib/prisma";
+import { logAction } from "@/lib/serverLogger";
 
 // POST - Toggle bodyguard status for a user (admin only)
 export async function POST(request: NextRequest) {
@@ -29,6 +30,14 @@ export async function POST(request: NextRequest) {
       data: { isBodyguard: isBodyguard },
       select: { id: true, name: true, isBodyguard: true },
     });
+
+    // Log the action
+    await logAction(
+      session.user.id,
+      "ADMIN_TOGGLE_BODYGUARD",
+      `Admin ${isBodyguard ? "granted" : "revoked"} bodyguard status for ${user.name}`,
+      { targetUserId: userId, targetUserName: user.name, isBodyguard }
+    );
 
     return NextResponse.json(user);
   } catch (error) {

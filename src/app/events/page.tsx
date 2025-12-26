@@ -4,6 +4,7 @@ import { useSession } from "next-auth/react";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useLanguage } from "@/components/LanguageProvider";
+import { logAction } from "@/lib/logger";
 
 interface Event {
   id: string;
@@ -45,6 +46,7 @@ export default function EventsPage() {
   useEffect(() => {
     if (session) {
       fetchEvents();
+      logAction("VIEW_EVENT", "Viewed events page");
     }
   }, [session]);
 
@@ -62,6 +64,8 @@ export default function EventsPage() {
 
   const handleJoin = async (eventId: string, joining: boolean) => {
     setActionLoading(eventId);
+    const event = events.find(e => e.id === eventId);
+    logAction("CLICK_BUTTON", `Clicked ${joining ? "join" : "leave"} event button`, { eventId, eventName: event?.name, joining });
 
     try {
       const res = await fetch(`/api/events/${eventId}/join`, {

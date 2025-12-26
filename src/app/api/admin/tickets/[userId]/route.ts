@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import prisma from "@/lib/prisma";
+import { logAction } from "@/lib/serverLogger";
 
 // PUT update ticket status (admin only)
 export async function PUT(
@@ -28,10 +29,24 @@ export async function PUT(
       );
     }
 
+    // Get user info for logging
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      select: { name: true },
+    });
+
     const ticket = await prisma.ticket.update({
       where: { userId },
       data: { status },
     });
+
+    // Log the action
+    await logAction(
+      session.user.id,
+      "ADMIN_APPROVE_TICKET",
+      `Admin changed ticket status to ${status} for ${user?.name || userId}`,
+      { targetUserId: userId, targetUserName: user?.name, newStatus: status }
+    );
 
     return NextResponse.json(ticket);
   } catch (error) {

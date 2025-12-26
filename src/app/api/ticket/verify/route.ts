@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import prisma from "@/lib/prisma";
+import { logAction } from "@/lib/serverLogger";
 
 // POST - Verify ticket by ID (bodyguard or admin only)
 export async function POST(request: NextRequest) {
@@ -49,6 +50,14 @@ export async function POST(request: NextRequest) {
     }
 
     const isActivated = ticket.status === "ACTIVATED";
+
+    // Log the verification action
+    await logAction(
+      session.user.id,
+      "VERIFY_TICKET",
+      `${isActivated ? "Verified" : "Denied"} ticket for ${ticket.user.name}`,
+      { ticketId, ticketStatus: ticket.status, ticketUserId: ticket.user.id, ticketUserName: ticket.user.name }
+    );
 
     return NextResponse.json({
       valid: isActivated,
