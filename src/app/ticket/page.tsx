@@ -39,6 +39,7 @@ export default function TicketPage() {
   const router = useRouter();
   const { t, language } = useLanguage();
   const [ticket, setTicket] = useState<Ticket | null>(null);
+  const [events, setEvents] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [showQRModal, setShowQRModal] = useState(false);
 
@@ -51,6 +52,7 @@ export default function TicketPage() {
   useEffect(() => {
     if (session) {
       fetchTicket();
+      fetchEvents();
       logAction("VIEW_TICKET", "Viewed ticket page");
     }
   }, [session]);
@@ -64,6 +66,16 @@ export default function TicketPage() {
       console.error("Failed to fetch ticket:", error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchEvents = async () => {
+    try {
+      const res = await fetch("/api/events");
+      const data = await res.json();
+      setEvents(data);
+    } catch (error) {
+      console.error("Failed to fetch events:", error);
     }
   };
 
@@ -94,9 +106,18 @@ export default function TicketPage() {
     }, 0);
     
     // Always add Performance price (it's mandatory for everyone)
-    const performanceEvent = allEvents.find(reg => reg.event.name === "Performance");
+    // First try to find it in user's event registrations
+    let performanceEvent = allEvents.find(reg => reg.event.name === "Performance");
+    
+    // If found in registrations, use its price
     if (performanceEvent && performanceEvent.event.price > 0) {
       total += performanceEvent.event.price;
+    } else {
+      // If not found in registrations, get it from all events list
+      const performanceEventFromList = events.find(e => e.name === "Performance");
+      if (performanceEventFromList && performanceEventFromList.price > 0) {
+        total += performanceEventFromList.price;
+      }
     }
     
     return total;
