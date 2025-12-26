@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import prisma from "@/lib/prisma";
+import { logAction } from "@/lib/serverLogger";
 
 // GET all feedbacks (admin only)
 export async function GET() {
@@ -61,6 +62,14 @@ export async function POST(request: NextRequest) {
         userId: session.user.id,
       },
     });
+
+    // Log the action
+    await logAction(
+      session.user.id,
+      "ADD_FEEDBACK",
+      `Submitted feedback`,
+      { feedbackId: feedback.id }
+    );
 
     return NextResponse.json(feedback, { status: 201 });
   } catch (error) {

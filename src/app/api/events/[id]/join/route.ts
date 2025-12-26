@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import prisma from "@/lib/prisma";
+import { logAction } from "@/lib/serverLogger";
 
 // POST join/update event registration
 export async function POST(
@@ -58,6 +59,14 @@ export async function POST(
         joining,
       },
     });
+
+    // Log the action
+    await logAction(
+      session.user.id,
+      joining ? "JOIN_EVENT" : "LEAVE_EVENT",
+      `${joining ? "Joined" : "Left"} event: ${event.name}`,
+      { eventId, eventName: event.name }
+    );
 
     return NextResponse.json(registration);
   } catch (error) {

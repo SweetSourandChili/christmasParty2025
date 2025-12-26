@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import prisma from "@/lib/prisma";
+import { logAction } from "@/lib/serverLogger";
 
 // GET all performances
 export async function GET() {
@@ -100,6 +101,14 @@ export async function POST(request: NextRequest) {
         },
       });
     }
+
+    // Log the action
+    await logAction(
+      session.user.id,
+      "CREATE_PERFORMANCE",
+      `Created performance: ${name}`,
+      { performanceId: performance.id, maxParticipants }
+    );
 
     return NextResponse.json(performance, { status: 201 });
   } catch (error) {

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import prisma from "@/lib/prisma";
+import { logAction } from "@/lib/serverLogger";
 
 // POST register to a performance
 export async function POST(
@@ -98,6 +99,14 @@ export async function POST(
       });
     }
 
+    // Log the action
+    await logAction(
+      session.user.id,
+      "JOIN_PERFORMANCE",
+      `Joined performance: ${performance.name}`,
+      { performanceId, performanceName: performance.name }
+    );
+
     return NextResponse.json(registration, { status: 201 });
   } catch (error) {
     console.error("Register to performance error:", error);
@@ -177,6 +186,20 @@ export async function DELETE(
         });
       }
     }
+
+    // Get performance name for logging
+    const performance = await prisma.performance.findUnique({
+      where: { id: performanceId },
+      select: { name: true },
+    });
+
+    // Log the action
+    await logAction(
+      session.user.id,
+      "LEAVE_PERFORMANCE",
+      `Left performance: ${performance?.name || performanceId}`,
+      { performanceId }
+    );
 
     return NextResponse.json({ message: "Unregistered successfully" });
   } catch (error) {

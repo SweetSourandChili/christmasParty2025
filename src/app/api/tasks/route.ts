@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import prisma from "@/lib/prisma";
+import { logAction } from "@/lib/serverLogger";
 
 // GET all tasks
 export async function GET() {
@@ -74,6 +75,14 @@ export async function POST(request: NextRequest) {
         },
       },
     });
+
+    // Log the action
+    await logAction(
+      session.user.id,
+      "ADD_TASK",
+      `Added ${type === "bring" ? "contribution" : "task"}: ${description.trim().substring(0, 50)}`,
+      { taskId: task.id, type }
+    );
 
     return NextResponse.json(task, { status: 201 });
   } catch (error) {

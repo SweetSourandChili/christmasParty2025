@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import prisma from "@/lib/prisma";
+import { logAction } from "@/lib/serverLogger";
 
 // GET all users (admin only)
 export async function GET() {
@@ -88,6 +89,14 @@ export async function DELETE(request: NextRequest) {
     await prisma.user.delete({
       where: { id: userId },
     });
+
+    // Log the action
+    await logAction(
+      session.user.id,
+      "ADMIN_DELETE_USER",
+      `Admin deleted user: ${userToDelete.name}`,
+      { deletedUserId: userId, deletedUserName: userToDelete.name }
+    );
 
     return NextResponse.json({ success: true, message: "User deleted successfully" });
   } catch (error) {

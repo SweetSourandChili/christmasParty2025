@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import bcrypt from "bcryptjs";
 import prisma from "@/lib/prisma";
 import { verifyEmailCode } from "@/lib/email";
+import { logAction } from "@/lib/serverLogger";
 
 export async function POST(request: NextRequest) {
   try {
@@ -83,6 +84,14 @@ export async function POST(request: NextRequest) {
         },
       });
     }
+
+    // Log registration action
+    await logAction(
+      user.id,
+      "REGISTER",
+      `User registered: ${name}`,
+      { email, phone }
+    );
 
     return NextResponse.json(
       { message: "User registered successfully", userId: user.id },

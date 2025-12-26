@@ -88,6 +88,9 @@ export default function AdminPage() {
   const [showCreateEvent, setShowCreateEvent] = useState(false);
   const [editingEvent, setEditingEvent] = useState<Event | null>(null);
   const [showUserEventModal, setShowUserEventModal] = useState<{ event: Event } | null>(null);
+  const [showLogsModal, setShowLogsModal] = useState<{ userId: string; userName: string } | null>(null);
+  const [userLogs, setUserLogs] = useState<any[]>([]);
+  const [logsLoading, setLogsLoading] = useState(false);
   const [newEvent, setNewEvent] = useState({
     name: "",
     description: "",
@@ -431,6 +434,52 @@ export default function AdminPage() {
     });
   };
 
+  const formatDateTime = (dateString: string) => {
+    return new Date(dateString).toLocaleString("en-US", {
+      year: "numeric",
+      month: "short",
+      day: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+      second: "2-digit",
+    });
+  };
+
+  const handleViewLogs = async (userId: string, userName: string) => {
+    setShowLogsModal({ userId, userName });
+    setLogsLoading(true);
+    setUserLogs([]);
+
+    try {
+      const res = await fetch(`/api/logs?userId=${userId}`);
+      if (res.ok) {
+        const data = await res.json();
+        setUserLogs(data);
+      } else {
+        alert("Failed to fetch logs");
+      }
+    } catch (error) {
+      console.error("Failed to fetch logs:", error);
+      alert("Failed to fetch logs");
+    } finally {
+      setLogsLoading(false);
+    }
+  };
+
+  const getActionIcon = (action: string) => {
+    if (action.includes("LOGIN")) return "🔐";
+    if (action.includes("REGISTER")) return "📝";
+    if (action.includes("PERFORMANCE")) return "🎭";
+    if (action.includes("EVENT")) return "🎉";
+    if (action.includes("TASK")) return "📋";
+    if (action.includes("FEEDBACK")) return "💬";
+    if (action.includes("VOTE")) return "⭐";
+    if (action.includes("ADMIN")) return "👑";
+    if (action.includes("TICKET")) return "🎫";
+    if (action.includes("VERIFY")) return "✅";
+    return "📌";
+  };
+
   if (status === "loading" || loading) {
     return (
       <div className="flex items-center justify-center min-h-[calc(100vh-4rem)]">
@@ -617,6 +666,13 @@ export default function AdminPage() {
                             <option value="ACTIVATED">Activated ✓</option>
                           </select>
                         )}
+                        <button
+                          onClick={() => handleViewLogs(user.id, user.name)}
+                          className="text-blue-400 hover:text-blue-300 p-1"
+                          title="View logs"
+                        >
+                          📋
+                        </button>
                         {!user.isAdmin && (
                           <button
                             onClick={() => handleDeleteUser(user.id, user.name)}
@@ -975,6 +1031,104 @@ export default function AdminPage() {
                 </p>
               </div>
             )}
+          </div>
+        </div>
+      )}
+
+      {/* Logs Modal */}
+      {showLogsModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm">
+          <div className="christmas-card w-full max-w-4xl max-h-[90vh] overflow-hidden flex flex-col">
+            <div className="flex items-center justify-between p-6 border-b border-christmas-gold/30">
+              <div>
+                <h2 className="text-2xl font-bold text-christmas-gold">
+                  📋 Activity Logs
+                </h2>
+                <p className="text-christmas-cream/70 text-sm mt-1">
+                  {showLogsModal.userName}
+                </p>
+              </div>
+              <button
+                onClick={() => {
+                  setShowLogsModal(null);
+                  setUserLogs([]);
+                }}
+                className="text-christmas-cream/50 hover:text-christmas-cream transition"
+              >
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+
+            <div className="flex-1 overflow-y-auto p-6">
+              {logsLoading ? (
+                <div className="flex items-center justify-center py-12">
+                  <div className="spinner" />
+                </div>
+              ) : userLogs.length === 0 ? (
+                <div className="text-center py-12">
+                  <p className="text-christmas-cream/50">No logs found for this user.</p>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {userLogs.map((log) => {
+                    let metadata = null;
+                    try {
+                      if (log.metadata) {
+                        metadata = JSON.parse(log.metadata);
+                      }
+                    } catch (e) {
+                      // Ignore parse errors
+                    }
+
+                    return (
+                      <div
+                        key={log.id}
+                        className="bg-christmas-dark/50 border border-christmas-gold/20 rounded-lg p-4 hover:border-christmas-gold/40 transition"
+                      >
+                        <div className="flex items-start gap-3">
+                          <span className="text-2xl">{getActionIcon(log.action)}</span>
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-2 mb-1">
+                              <span className="font-medium text-christmas-gold">
+                                {log.action.replace(/_/g, " ")}
+                              </span>
+                              <span className="text-xs text-christmas-cream/50">
+                                {formatDateTime(log.createdAt)}
+                              </span>
+                            </div>
+                            {log.details && (
+                              <p className="text-christmas-cream/80 text-sm mb-2">
+                                {log.details}
+                              </p>
+                            )}
+                            {metadata && Object.keys(metadata).length > 0 && (
+                              <div className="mt-2 pt-2 border-t border-christmas-gold/10">
+                                <details className="text-xs">
+                                  <summary className="text-christmas-cream/50 cursor-pointer hover:text-christmas-cream/70">
+                                    View Details
+                                  </summary>
+                                  <pre className="mt-2 text-christmas-cream/60 bg-christmas-dark/50 p-2 rounded overflow-x-auto">
+                                    {JSON.stringify(metadata, null, 2)}
+                                  </pre>
+                                </details>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+
+            <div className="p-6 border-t border-christmas-gold/30">
+              <p className="text-xs text-christmas-cream/50 text-center">
+                Showing {userLogs.length} most recent logs (max 500)
+              </p>
+            </div>
           </div>
         </div>
       )}

@@ -34,6 +34,7 @@ model User {
   tasks         Task[]
   performanceComments PerformanceComment[]
   performanceVotes PerformanceVote[]
+  logs              Log[]
 }
 
 model VerificationCode {
@@ -171,4 +172,21 @@ model AppSettings {
   votingEnabled   Boolean  @default(false)
   illusionMode    Boolean  @default(false)
   updatedAt       DateTime @updatedAt
+}
+
+// User activity logs
+model Log {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  action    String   // e.g., "LOGIN", "CREATE_PERFORMANCE", "JOIN_EVENT"
+  details   String?  // Additional details about the action
+  metadata  String?  // JSON string for additional data
+  createdAt DateTime @default(now())
+  
+  // Relations
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId    String   @db.ObjectId
+  
+  @@index([userId])
+  @@index([createdAt])
+  @@index([action])
 }

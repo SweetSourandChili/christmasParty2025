@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import prisma from "@/lib/prisma";
+import { logAction } from "@/lib/serverLogger";
 
 // DELETE an event (admin only)
 export async function DELETE(
@@ -20,9 +21,23 @@ export async function DELETE(
 
     const { id: eventId } = await params;
 
+    // Get event name before deleting
+    const event = await prisma.event.findUnique({
+      where: { id: eventId },
+      select: { name: true },
+    });
+
     await prisma.event.delete({
       where: { id: eventId },
     });
+
+    // Log the action
+    await logAction(
+      session.user.id,
+      "ADMIN_DELETE_EVENT",
+      `Admin deleted event: ${event?.name || eventId}`,
+      { eventId, eventName: event?.name }
+    );
 
     return NextResponse.json({ message: "Event deleted successfully" });
   } catch (error) {
@@ -62,10 +77,24 @@ export async function PUT(
     if (body.isLocked !== undefined) updateData.isLocked = body.isLocked;
     if (body.autoJoin !== undefined) updateData.autoJoin = body.autoJoin;
 
+    // Get event name before updating
+    const oldEvent = await prisma.event.findUnique({
+      where: { id: eventId },
+      select: { name: true },
+    });
+
     const event = await prisma.event.update({
       where: { id: eventId },
       data: updateData,
     });
+
+    // Log the action
+    await logAction(
+      session.user.id,
+      "ADMIN_UPDATE_EVENT",
+      `Admin updated event: ${event.name}`,
+      { eventId, eventName: event.name, changes: Object.keys(updateData) }
+    );
 
     return NextResponse.json(event);
   } catch (error) {

@@ -2,6 +2,7 @@ import { NextAuthOptions } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 import bcrypt from "bcryptjs";
 import prisma from "./prisma";
+import { logAction } from "./serverLogger";
 
 export const authOptions: NextAuthOptions = {
   providers: [
@@ -36,6 +37,9 @@ export const authOptions: NextAuthOptions = {
         if (!isPasswordValid) {
           throw new Error("Invalid password");
         }
+
+        // Log login action (fire and forget)
+        logAction(user.id, "LOGIN", "User logged in").catch(() => {});
 
         return {
           id: user.id,

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import prisma from "@/lib/prisma";
+import { logAction } from "@/lib/serverLogger";
 
 // GET all events
 export async function GET() {
@@ -61,6 +62,14 @@ export async function POST(request: NextRequest) {
         autoJoin: autoJoin || false,
       },
     });
+
+    // Log the action
+    await logAction(
+      session.user.id,
+      "ADMIN_CREATE_EVENT",
+      `Admin created event: ${name}`,
+      { eventId: event.id, eventName: name, price }
+    );
 
     return NextResponse.json(event, { status: 201 });
   } catch (error) {
