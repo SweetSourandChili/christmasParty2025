@@ -7,6 +7,8 @@ import Link from "next/link";
 import Countdown from "@/components/Countdown";
 import TicketStatus from "@/components/TicketStatus";
 import EventReminderModal from "@/components/EventReminderModal";
+import PerformanceReminderModal, { shouldShowPerformanceReminder } from "@/components/PerformanceReminderModal";
+import PlaylistReminderModal, { shouldShowPlaylistReminder } from "@/components/PlaylistReminderModal";
 import FeedbackForm from "@/components/FeedbackForm";
 import { useLanguage } from "@/components/LanguageProvider";
 
@@ -37,6 +39,8 @@ export default function DashboardPage() {
   const [ticket, setTicket] = useState<Ticket | null>(null);
   const [loading, setLoading] = useState(true);
   const [showReminderModal, setShowReminderModal] = useState(false);
+  const [showPerformanceReminder, setShowPerformanceReminder] = useState(false);
+  const [showPlaylistReminder, setShowPlaylistReminder] = useState(false);
 
   useEffect(() => {
     if (status === "unauthenticated") {
@@ -67,10 +71,20 @@ export default function DashboardPage() {
     try {
       const res = await fetch("/api/user/notification");
       const data = await res.json();
-      // Show modal only if user has seen it less than 3 times
+      // Show event reminder modal only if user has seen it less than 3 times
       if (data.notificationCount < 3) {
         // Delay showing modal for better UX
         setTimeout(() => setShowReminderModal(true), 1500);
+      }
+      
+      // Check for performance reminder (uses localStorage)
+      if (shouldShowPerformanceReminder()) {
+        setTimeout(() => setShowPerformanceReminder(true), 3000);
+      }
+      
+      // Check for playlist reminder (uses localStorage)
+      if (shouldShowPlaylistReminder()) {
+        setTimeout(() => setShowPlaylistReminder(true), 5000);
       }
     } catch (error) {
       console.error("Failed to check notification count:", error);
@@ -94,6 +108,16 @@ export default function DashboardPage() {
       {/* Event Reminder Modal */}
       {showReminderModal && (
         <EventReminderModal onClose={() => setShowReminderModal(false)} />
+      )}
+      
+      {/* Performance Reminder Modal */}
+      {showPerformanceReminder && !showReminderModal && (
+        <PerformanceReminderModal onClose={() => setShowPerformanceReminder(false)} />
+      )}
+      
+      {/* Playlist Reminder Modal */}
+      {showPlaylistReminder && !showReminderModal && !showPerformanceReminder && (
+        <PlaylistReminderModal onClose={() => setShowPlaylistReminder(false)} />
       )}
 
       {/* Welcome Section */}

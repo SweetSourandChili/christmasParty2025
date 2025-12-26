@@ -42,6 +42,12 @@ export default function RootLayout({
               <main className="relative z-10 min-h-[calc(100vh-4rem)]">
                 {children}
               </main>
+              {/* Developer Credit */}
+              <footer className="relative z-10 py-4 text-center">
+                <p className="text-christmas-cream/40 text-sm">
+                  Developed by <span className="text-christmas-gold/60 font-medium">Arda Meriç</span>
+                </p>
+              </footer>
             </IllusionProvider>
           </LanguageProvider>
         </SessionProvider>

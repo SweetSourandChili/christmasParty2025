@@ -79,11 +79,26 @@ export default function TicketPage() {
 
   const joiningEvents =
     ticket.user?.eventRegistrations?.filter((reg) => reg.joining) || [];
+  
+  const allEvents = ticket.user?.eventRegistrations || [];
 
   // Calculate total price for joined events
-  const totalPrice = joiningEvents.reduce((total, reg) => {
-    return total + (reg.event.price > 0 ? reg.event.price : 0);
-  }, 0);
+  // Performance is mandatory for everyone, so always include its price
+  const totalPrice = (() => {
+    let total = joiningEvents.reduce((sum, reg) => {
+      // Skip Performance here, we'll add it separately
+      if (reg.event.name === "Performance") return sum;
+      return sum + (reg.event.price > 0 ? reg.event.price : 0);
+    }, 0);
+    
+    // Always add Performance price (it's mandatory for everyone)
+    const performanceEvent = allEvents.find(reg => reg.event.name === "Performance");
+    if (performanceEvent && performanceEvent.event.price > 0) {
+      total += performanceEvent.event.price;
+    }
+    
+    return total;
+  })();
 
   return (
     <div className="max-w-2xl mx-auto p-4 sm:p-6 lg:p-8">

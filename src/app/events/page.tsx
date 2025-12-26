@@ -96,10 +96,17 @@ export default function EventsPage() {
   };
 
   // Calculate total price for events user is joining
+  // Performance is mandatory for everyone, so always include its price
   const calculateTotal = () => {
     return events.reduce((total, event) => {
       const myRegistration = getMyRegistration(event);
       const isJoining = myRegistration?.joining || event.autoJoin;
+      
+      // Performance event is mandatory for everyone
+      if (event.name === "Performance" && event.price > 0) {
+        return total + event.price;
+      }
+      
       if (isJoining && event.price > 0) {
         return total + event.price;
       }
