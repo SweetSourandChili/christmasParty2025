@@ -286,7 +286,7 @@ export default function DashboardPage() {
               {t("playlistDesc")}
             </p>
             <a
-              href="https://open.spotify.com/playlist/17P1aavugSwlLPWmvuXZqs?si=0a0a55f24ab84d62&pt=a1e6b75e95ed69b78f23ccfcf8a758cd"
+              href="https://open.spotify.com/playlist/17P1aavugSwlLPWmvuXZqs?si=d3122ec995db41db&pt=48e865d77e6b83b25ef05fbbda7f9f30"
               target="_blank"
               rel="noopener noreferrer"
               className="inline-flex items-center gap-2 px-6 py-3 bg-[#1DB954] hover:bg-[#1ed760] text-white font-semibold rounded-full transition-all hover:scale-105 shadow-lg"

@@ -45,7 +45,7 @@ export default function PlaylistReminderModal({ onClose }: PlaylistReminderModal
     setIsVisible(false);
     // Open Spotify playlist in new tab
     window.open(
-      "https://open.spotify.com/playlist/17P1aavugSwlLPWmvuXZqs?si=0a0a55f24ab84d62&pt=a1e6b75e95ed69b78f23ccfcf8a758cd",
+      "https://open.spotify.com/playlist/17P1aavugSwlLPWmvuXZqs?si=d3122ec995db41db&pt=48e865d77e6b83b25ef05fbbda7f9f30",
       "_blank"
     );
     setTimeout(onClose, 300);
