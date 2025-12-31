@@ -64,8 +64,14 @@ export async function GET() {
       };
     });
 
-    // Sort by total points descending
-    performancesWithStats.sort((a, b) => b.totalPoints - a.totalPoints);
+    // Sort by average points descending (more fair than total points)
+    // If averages are equal, sort by vote count (more votes = more reliable)
+    performancesWithStats.sort((a, b) => {
+      if (b.averagePoints !== a.averagePoints) {
+        return b.averagePoints - a.averagePoints;
+      }
+      return b.voteCount - a.voteCount;
+    });
 
     return NextResponse.json(performancesWithStats);
   } catch (error) {

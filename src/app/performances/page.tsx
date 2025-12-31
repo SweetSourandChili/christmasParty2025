@@ -548,14 +548,14 @@ export default function PerformancesPage() {
                       {/* Stats & Voting */}
                       <div className="flex-shrink-0 text-right">
                         <div className="text-2xl font-bold text-christmas-gold">
-                          {perf.totalPoints}
+                          {perf.voteCount > 0 ? perf.averagePoints.toFixed(1) : "—"}
                         </div>
                         <div className="text-xs text-christmas-cream/50">
                           {perf.voteCount} {perf.voteCount === 1 ? t("vote") : t("votes")}
                         </div>
                         {perf.voteCount > 0 && (
                           <div className="text-xs text-christmas-cream/50">
-                            {t("avg")}: {perf.averagePoints}
+                            {t("total")}: {perf.totalPoints}
                           </div>
                         )}
 
